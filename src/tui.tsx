@@ -6,11 +6,17 @@ export default Plugin.define({
   id: "opencode-link-preview",
   setup(context) {
     const options = parseOptions(context.options)
-    if (!options.diagnostic) return
+    if (!options.enabled) return
 
     return context.ui.slot({
       append: "app",
-      render: () => <PreviewOverlay delayMs={options.hoverDelayMs} />,
+      render: () => (
+        <PreviewOverlay
+          delayMs={options.hoverDelayMs}
+          workspace={context.location?.directory}
+          previewOptions={options}
+        />
+      ),
     })
   },
 })
