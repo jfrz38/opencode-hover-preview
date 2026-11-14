@@ -156,4 +156,25 @@ describe("URL previews", () => {
     controller.abort()
     await expect(preview).rejects.toBeDefined()
   })
+
+  test("applies the timeout while DNS resolution is pending", async () => {
+    const neverResolvingDns: UrlPreviewDependencies = {
+      fetch: async () => {
+        throw new Error("fetch should not run")
+      },
+      resolveHost: () => new Promise(() => {}),
+      timeoutMs: 1,
+    }
+
+    expect(
+      await loadUrlPreview(
+        target("https://example.com"),
+        new AbortController().signal,
+        neverResolvingDns,
+      ),
+    ).toMatchObject({
+      kind: "unavailable",
+      description: "The URL preview timed out.",
+    })
+  })
 })

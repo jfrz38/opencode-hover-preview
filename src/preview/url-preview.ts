@@ -82,13 +82,40 @@ function acceptedPort(url: URL): boolean {
   return url.port === "" || (url.protocol === "http:" && url.port === "80") || (url.protocol === "https:" && url.port === "443")
 }
 
-async function validateUrl(url: URL, resolveHost: UrlPreviewDependencies["resolveHost"]): Promise<string | undefined> {
+function withAbort<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) return Promise.reject(signal.reason)
+
+  return new Promise<T>((resolve, reject) => {
+    const aborted = () => {
+      cleanup()
+      reject(signal.reason)
+    }
+    const cleanup = () => signal.removeEventListener("abort", aborted)
+    signal.addEventListener("abort", aborted, { once: true })
+    operation.then(
+      (value) => {
+        cleanup()
+        resolve(value)
+      },
+      (error) => {
+        cleanup()
+        reject(error)
+      },
+    )
+  })
+}
+
+async function validateUrl(
+  url: URL,
+  resolveHost: UrlPreviewDependencies["resolveHost"],
+  signal: AbortSignal,
+): Promise<string | undefined> {
   if (url.protocol !== "http:" && url.protocol !== "https:") return "Only HTTP and HTTPS URLs are supported."
   if (url.username !== "" || url.password !== "") return "URLs with embedded credentials are not allowed."
   if (!acceptedPort(url)) return "Only standard HTTP and HTTPS ports are allowed."
 
   const hostname = url.hostname.replace(/^\[|\]$/gu, "")
-  const addresses = isIP(hostname) === 0 ? await resolveHost(hostname) : [hostname]
+  const addresses = isIP(hostname) === 0 ? await withAbort(resolveHost(hostname), signal) : [hostname]
   if (addresses.length === 0 || addresses.some((address) => !isPublicIp(address))) {
     return "Local and private network addresses are not allowed."
   }
@@ -195,7 +222,7 @@ export async function loadUrlPreview(
   try {
     let url = new URL(target.value)
     for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects++) {
-      const validationError = await validateUrl(url, dependencies.resolveHost)
+      const validationError = await validateUrl(url, dependencies.resolveHost, controller.signal)
       if (validationError !== undefined) return unavailable(validationError)
 
       const response = await dependencies.fetch(url, {
