@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 import { BoxRenderable, MarkdownRenderable, StyledText, SyntaxStyle, TextRenderable } from "@opentui/core"
 import { createTestRenderer } from "@opentui/core/testing"
-import { inspectRenderable } from "../../src/diagnostics/renderable-inspector.js"
+import { inspectRenderable } from "../../src/opentui/renderable-inspector.js"
 
 test("uses link chunk metadata for Markdown-style labels", async () => {
   const setup = await createTestRenderer({ width: 30, height: 4 })

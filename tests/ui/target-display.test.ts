@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { formatPreviewTarget } from "../../src/diagnostics/target-display.js"
+import { formatPreviewTarget } from "../../src/ui/target-display.js"
 
 describe("diagnostic target display", () => {
   test("removes URL query parameters and fragments", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { LineInfo } from "@opentui/core"
-import { findTargetAtTextCell, type TextHitLayout } from "../../src/diagnostics/text-hit-test.js"
+import { findTargetAtTextCell, type TextHitLayout } from "../../src/opentui/text-hit-test.js"
 import { findPreviewTargets } from "../../src/domain/preview-target.js"
 
 function layout(lineInfo: LineInfo, overrides: Partial<TextHitLayout> = {}): TextHitLayout {

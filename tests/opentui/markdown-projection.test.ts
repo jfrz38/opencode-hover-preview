@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { projectMarkdownInline } from "../../src/diagnostics/markdown-projection.js"
+import { projectMarkdownInline } from "../../src/opentui/markdown-projection.js"
 
 describe("Markdown inline projection", () => {
   test("maps a rendered label to its URL", () => {

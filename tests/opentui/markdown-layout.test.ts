@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { compareMarkdownLayout } from "../../src/diagnostics/markdown-layout.js"
+import { compareMarkdownLayout } from "../../src/opentui/markdown-layout.js"
 
 describe("Markdown layout comparison", () => {
   test("recognizes a flattened concealed projection", () => {
