@@ -24,7 +24,7 @@ OpenCode also has native image preview settings:
 
 Test pasted images both with those settings enabled and disabled.
 
-## Load the diagnostic plugin
+## Load the plugin
 
 After `bun install`, add this repository as a TUI-only plugin in the global
 `cli.json`:
@@ -36,8 +36,10 @@ After `bun install`, add this repository as a TUI-only plugin in the global
     {
       "package": "C:/Users/JoseF/git/opencode-link-preview",
       "options": {
-        "diagnostic": true,
-        "hoverDelayMs": 500
+        "enabled": true,
+        "hoverDelayMs": 500,
+        "urlPreview": true,
+        "filePreview": true
       }
     }
   ]
@@ -59,12 +61,12 @@ using the renderable's public line, wrapping, scroll, and text data.
 | --- | --- | --- | --- | --- | --- |
 | Assistant response | Markdown URL with retained source/metadata | Conditional | Exact cell | Yes | Experimental |
 | Assistant response | Flattened Markdown label | No | None | Yes | No-go |
-| Assistant response | Plain URL | Pending | Pending | Pending | Pending |
-| Assistant response | Local path | Pending | Pending | Pending | Pending |
-| Prompt | Pasted URL/path | Pending | Pending | Pending | Pending |
+| Assistant response | Plain URL | Literal target | Exact cell | Yes | Experimental |
+| Assistant response | Local path | Literal target | Exact cell | Yes | Experimental |
+| Prompt | Pasted URL/path | Literal target | Exact cell | Yes | Experimental |
 | Prompt | `[Image 1]` | Placeholder text only | Exact cell | Yes | Experimental |
 | Prompt | `[Pasted ~N lines]` | Placeholder text only | Exact cell | Yes | Content no-go |
-| Prompt | `@README.md` | Pending | Pending | Pending | Pending |
+| Prompt | `@README.md` | Literal target | Exact cell | Yes | Experimental |
 | Sent user message | URL/path/attachment | Pending | Pending | Pending | Pending |
 
 ## Protocol
