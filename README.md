@@ -7,9 +7,9 @@ when the pointer rests on a supported inline target.
 
 | Target | Preview |
 | --- | --- |
-| Public HTTP(S) URL | Page title, host, description, and sanitized URL |
+| Public HTTP(S) URL | Page title and description |
 | `@file` mention | Formatted workspace file excerpt |
-| Markdown link to a workspace file | File name, relative path, and formatted excerpt |
+| Markdown link to a workspace file | Formatted workspace file excerpt |
 | `@image` mention or Markdown link to an image | Bounded PNG, JPEG, GIF, or WebP image |
 | Direct public HTTP(S) image URL | Bounded PNG, JPEG, GIF, or WebP image |
 
@@ -42,7 +42,8 @@ Reference the package from the OpenCode TUI configuration:
         "hoverDelayMs": 500,
         "urlPreview": true,
         "filePreview": true,
-        "imagePreview": true
+        "imagePreview": true,
+        "showDetails": false
       }
     }
   ]
@@ -61,6 +62,12 @@ Run `/reload` after changing the plugin or its configuration.
 - `imagePreview`: renders supported local and remote images; defaults to `true`.
   Local images also require `filePreview`; remote images also require
   `urlPreview`.
+- `showDetails`: adds target diagnostics and metadata such as file paths, image
+  locations, URL hosts, and sanitized URLs; defaults to `false`.
+
+Previews use a compact presentation by default: files show their formatted
+content, images show the image, and URLs show the fetched title and description.
+Set `showDetails` to `true` to restore the complete metadata display.
 
 `diagnostic: false` remains accepted as a legacy alias for `enabled: false`.
 

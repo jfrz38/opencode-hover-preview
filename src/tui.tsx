@@ -15,6 +15,7 @@ export default Plugin.define({
           delayMs={options.hoverDelayMs}
           workspace={context.location?.directory}
           previewOptions={options}
+          showDetails={options.showDetails}
         />
       ),
     })

@@ -4,6 +4,7 @@ export interface PluginOptions {
   readonly urlPreview: boolean
   readonly filePreview: boolean
   readonly imagePreview: boolean
+  readonly showDetails: boolean
 }
 
 const DEFAULT_HOVER_DELAY_MS = 500
@@ -18,5 +19,6 @@ export function parseOptions(input: Readonly<Record<string, unknown>>): PluginOp
     urlPreview: input.urlPreview !== false,
     filePreview: input.filePreview !== false,
     imagePreview: input.imagePreview !== false,
+    showDetails: input.showDetails === true,
   }
 }

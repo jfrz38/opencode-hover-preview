@@ -9,6 +9,7 @@ describe("plugin options", () => {
       urlPreview: true,
       filePreview: true,
       imagePreview: true,
+      showDetails: false,
     })
   })
 
@@ -25,6 +26,12 @@ describe("plugin options", () => {
       filePreview: false,
       imagePreview: false,
     })
+  })
+
+  test("shows preview details only when explicitly enabled", () => {
+    expect(parseOptions({}).showDetails).toBe(false)
+    expect(parseOptions({ showDetails: true }).showDetails).toBe(true)
+    expect(parseOptions({ showDetails: "true" }).showDetails).toBe(false)
   })
 
 })
