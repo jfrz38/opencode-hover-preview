@@ -11,6 +11,8 @@ OpenCode Hover Preview adds contextual previews to the OpenCode terminal UI.
 Rest the pointer on a supported target to inspect it without opening another
 application or leaving the current session.
 
+![Demo of URL, workspace file, and image hover previews in OpenCode](./assets/example.gif)
+
 ## Supported previews
 
 | Target | Preview |
