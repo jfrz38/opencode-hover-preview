@@ -8,7 +8,7 @@ import {
   canLoadPreview,
   isPreviewEnabled,
   loadPreview,
-  type PreviewOptions,
+  type PreviewSources,
 } from "../../src/preview/load-preview.js"
 
 const workspaces: string[] = []
@@ -17,11 +17,11 @@ function target(kind: PreviewTarget["kind"], value: string): PreviewTarget {
   return { kind, value, source: "text", start: 0, end: value.length }
 }
 
-function options(overrides: Partial<PreviewOptions> = {}): PreviewOptions {
+function sources(overrides: Partial<PreviewSources> = {}): PreviewSources {
   return {
-    urlPreview: true,
-    filePreview: true,
-    imagePreview: true,
+    url: true,
+    file: true,
+    image: true,
     ...overrides,
   }
 }
@@ -38,7 +38,7 @@ afterEach(async () => {
 
 describe("preview loading", () => {
   test("does not load targets when all applicable preview categories are disabled", async () => {
-    const disabled = options({ urlPreview: false, filePreview: false, imagePreview: false })
+    const disabled = sources({ url: false, file: false, image: false })
     const url = target("url", "https://example.com")
     const file = target("file-link", "./README.md")
 
@@ -67,13 +67,13 @@ describe("preview loading", () => {
       data: new Uint8Array(),
     }
 
-    expect(isPreviewEnabled(urlTarget, url, options({ urlPreview: false }))).toBe(false)
-    expect(isPreviewEnabled(urlTarget, image, options({ urlPreview: false }))).toBe(true)
-    expect(isPreviewEnabled(fileTarget, file, options({ filePreview: false }))).toBe(false)
-    expect(isPreviewEnabled(fileTarget, image, options({ filePreview: false }))).toBe(true)
-    expect(isPreviewEnabled(urlTarget, url, options({ imagePreview: false }))).toBe(true)
-    expect(isPreviewEnabled(fileTarget, file, options({ imagePreview: false }))).toBe(true)
-    expect(isPreviewEnabled(fileTarget, image, options({ imagePreview: false }))).toBe(false)
+    expect(isPreviewEnabled(urlTarget, url, sources({ url: false }))).toBe(false)
+    expect(isPreviewEnabled(urlTarget, image, sources({ url: false }))).toBe(true)
+    expect(isPreviewEnabled(fileTarget, file, sources({ file: false }))).toBe(false)
+    expect(isPreviewEnabled(fileTarget, image, sources({ file: false }))).toBe(true)
+    expect(isPreviewEnabled(urlTarget, url, sources({ image: false }))).toBe(true)
+    expect(isPreviewEnabled(fileTarget, file, sources({ image: false }))).toBe(true)
+    expect(isPreviewEnabled(fileTarget, image, sources({ image: false }))).toBe(false)
   })
 
   test("shows local images independently from file previews", async () => {
@@ -86,7 +86,7 @@ describe("preview loading", () => {
       await loadPreview(
         target("file-mention", "@image.png"),
         root,
-        options({ filePreview: false }),
+        sources({ file: false }),
         new AbortController().signal,
       ),
     ).toMatchObject({ kind: "image" })
@@ -94,7 +94,7 @@ describe("preview loading", () => {
       await loadPreview(
         target("file-mention", "@notes.txt"),
         root,
-        options({ filePreview: false }),
+        sources({ file: false }),
         new AbortController().signal,
       ),
     ).toBeUndefined()
@@ -103,7 +103,7 @@ describe("preview loading", () => {
       await loadPreview(
         target("file-mention", "@image.png"),
         root,
-        options({ imagePreview: false }),
+        sources({ image: false }),
         new AbortController().signal,
       ),
     ).toBeUndefined()
@@ -111,7 +111,7 @@ describe("preview loading", () => {
       await loadPreview(
         target("file-mention", "@notes.txt"),
         root,
-        options({ imagePreview: false }),
+        sources({ image: false }),
         new AbortController().signal,
       ),
     ).toMatchObject({ kind: "file" })
@@ -128,14 +128,14 @@ describe("preview loading", () => {
       isPreviewEnabled(
         target("url", "https://example.com"),
         unavailable,
-        options({ urlPreview: false }),
+        sources({ url: false }),
       ),
     ).toBe(false)
     expect(
       isPreviewEnabled(
         target("file-link", "./missing.png"),
         unavailable,
-        options({ filePreview: false }),
+        sources({ file: false }),
       ),
     ).toBe(false)
   })
