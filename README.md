@@ -26,7 +26,7 @@ currently publish an inline hover provider. Treat compatibility as provisional.
 Install dependencies:
 
 ```sh
-bun install
+make install
 ```
 
 Reference the package from the OpenCode TUI configuration:
@@ -140,11 +140,20 @@ pasted composer content is unavailable to the plugin.
 
 ## Development
 
+Run all project checks:
+
 ```sh
-bun test
-bun run typecheck
-git diff --check
+make check
 ```
+
+Run the build validation or tests individually:
+
+```sh
+make build
+make test
+```
+
+`make build` checks the TypeScript types without emitting artifacts.
 
 See [`docs/architecture.md`](docs/architecture.md) for the internal boundaries
 and [`docs/experiments.md`](docs/experiments.md) for host feasibility findings.
