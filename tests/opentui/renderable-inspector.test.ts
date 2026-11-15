@@ -1,5 +1,12 @@
 import { expect, test } from "bun:test"
-import { BoxRenderable, MarkdownRenderable, StyledText, SyntaxStyle, TextRenderable } from "@opentui/core"
+import {
+  BoxRenderable,
+  MarkdownRenderable,
+  StyledText,
+  SyntaxStyle,
+  TextareaRenderable,
+  TextRenderable,
+} from "@opentui/core"
 import { createTestRenderer } from "@opentui/core/testing"
 import { inspectRenderable } from "../../src/opentui/renderable-inspector.js"
 
@@ -119,6 +126,27 @@ test("resolves local link metadata but ignores placeholders", async () => {
     })
     expect(inspectRenderable(text, { x: 8, y: 0 }).target).toBeUndefined()
     expect(inspectRenderable(text, { x: 27, y: 0 }).target).toBeUndefined()
+  } finally {
+    setup.renderer.destroy()
+  }
+})
+
+test("resolves a file mention on a later textarea line", async () => {
+  const setup = await createTestRenderer({ width: 40, height: 4 })
+
+  try {
+    const textarea = new TextareaRenderable(setup.renderer, {
+      initialValue: "first line\nopen @README.md",
+      width: 40,
+      height: 3,
+    })
+    setup.renderer.root.add(textarea)
+    await setup.renderOnce()
+
+    expect(inspectRenderable(textarea, { x: 6, y: 1 }).target).toMatchObject({
+      kind: "file-mention",
+      value: "@README.md",
+    })
   } finally {
     setup.renderer.destroy()
   }

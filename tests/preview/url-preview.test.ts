@@ -96,7 +96,7 @@ describe("URL previews", () => {
     expect(requests).toBe(1)
   })
 
-  test("rejects non-HTML and oversized responses", async () => {
+  test("silently ignores non-HTML responses and rejects oversized HTML", async () => {
     const nonHtml = async () =>
       new Response("plain", { headers: { "content-type": "text/plain" } })
     expect(
@@ -105,10 +105,7 @@ describe("URL previews", () => {
         new AbortController().signal,
         dependencies(nonHtml),
       ),
-    ).toMatchObject({
-      kind: "unavailable",
-      description: "The URL did not return an HTML document.",
-    })
+    ).toBeUndefined()
 
     const oversized = async () =>
       new Response("<html></html>", {
@@ -151,7 +148,7 @@ describe("URL previews", () => {
     })
   })
 
-  test("rejects mismatched, unsupported, disabled, and oversized images", async () => {
+  test("rejects invalid images and suppresses unsupported or disabled images", async () => {
     const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
     const mismatch = async () =>
       new Response(png, { headers: { "content-type": "image/jpeg" } })
@@ -174,10 +171,7 @@ describe("URL previews", () => {
         new AbortController().signal,
         dependencies(unsupported),
       ),
-    ).toMatchObject({
-      kind: "unavailable",
-      description: "The URL returned an unsupported image format.",
-    })
+    ).toBeUndefined()
 
     const valid = async () =>
       new Response(png, { headers: { "content-type": "image/png" } })
@@ -188,10 +182,7 @@ describe("URL previews", () => {
         dependencies(valid),
         false,
       ),
-    ).toMatchObject({
-      kind: "unavailable",
-      description: "Image previews are disabled by plugin configuration.",
-    })
+    ).toBeUndefined()
 
     const oversized = async () =>
       new Response(null, {
