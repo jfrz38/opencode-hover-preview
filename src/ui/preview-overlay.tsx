@@ -1,5 +1,6 @@
 import { usePlugin } from "@opencode/plugin/tui"
-import type { MouseEvent } from "@opentui/core"
+import { generateSyntax } from "@opencode/theme/tui"
+import type { MouseEvent, Renderable, SyntaxStyle } from "@opentui/core"
 import { createSignal, For, onCleanup, Show } from "solid-js"
 import type { PreviewContent } from "../domain/preview-content.js"
 import { HoverDelay, systemTimerScheduler } from "../domain/hover-delay.js"
@@ -9,9 +10,11 @@ import { inspectRenderable } from "../opentui/renderable-inspector.js"
 import { observeRootMouse } from "../opentui/root-mouse-observer.js"
 import { loadPreview, type PreviewOptions } from "../preview/load-preview.js"
 import { PreviewCache } from "../preview/preview-cache.js"
+import { resolveFilePreviewFormat } from "./file-preview-format.js"
 
 const OVERLAY_WIDTH = 70
 const MAX_OVERLAY_HEIGHT = 16
+const FILE_BODY_HEIGHT = 8
 const IMAGE_HEIGHT = 10
 const OVERLAY_ID = "opencode-link-preview.overlay"
 
@@ -33,14 +36,65 @@ function contentLines(content: PreviewContent): string[] {
       return [content.title, content.host, content.description, content.url].filter(
         (line): line is string => line !== undefined && line !== "",
       )
-    case "file": {
-      const body = content.body.split("\n").slice(0, 8)
-      if (content.truncated) body.push("… truncated")
-      return [content.title, content.path, ...body]
-    }
+    case "file":
+      return [content.title, content.path]
     case "unavailable":
       return [content.title, content.description]
   }
+}
+
+function isInsideOverlay(renderable: Renderable): boolean {
+  let current: Renderable | null = renderable
+  while (current !== null) {
+    if (current.id === OVERLAY_ID) return true
+    current = current.parent
+  }
+  return false
+}
+
+function FilePreviewBody(props: {
+  readonly content: Extract<PreviewContent, { readonly kind: "file" }>
+  readonly syntaxStyle: SyntaxStyle
+}) {
+  const body = () => {
+    const format = resolveFilePreviewFormat(props.content.language)
+    switch (format.kind) {
+      case "markdown":
+        return (
+          <markdown
+            content={props.content.body}
+            syntaxStyle={props.syntaxStyle}
+            conceal
+            concealCode={false}
+          />
+        )
+      case "code":
+        return (
+          <code
+            content={props.content.body}
+            filetype={format.filetype}
+            syntaxStyle={props.syntaxStyle}
+            drawUnstyledText
+            wrapMode="word"
+          />
+        )
+      case "plain":
+        return <text fg="#dddddd">{props.content.body}</text>
+    }
+  }
+
+  return (
+    <>
+      <text fg="#ffffff">{props.content.title}</text>
+      <text fg="#aaaaaa">{props.content.path}</text>
+      <box height={FILE_BODY_HEIGHT} overflow="hidden">
+        {body()}
+      </box>
+      <Show when={props.content.truncated}>
+        <text fg="#aaaaaa">… truncated</text>
+      </Show>
+    </>
+  )
 }
 
 export function PreviewOverlay(props: {
@@ -49,6 +103,7 @@ export function PreviewOverlay(props: {
   readonly previewOptions: PreviewOptions
 }) {
   const context = usePlugin()
+  const syntaxStyle = generateSyntax(context.theme, context.renderer.nativeScene)
   const cache = new PreviewCache()
   const [visible, setVisible] = createSignal<PreviewState>()
   let activeLoad: AbortController | undefined
@@ -130,7 +185,7 @@ export function PreviewOverlay(props: {
       delay.leave()
       return
     }
-    if (renderable.id === OVERLAY_ID) return
+    if (isInsideOverlay(renderable)) return
     if (event.type === "out" || event.type === "scroll") {
       delay.leave()
       return
@@ -152,6 +207,7 @@ export function PreviewOverlay(props: {
   onCleanup(() => {
     delay.dispose()
     stopObserving()
+    void context.renderer.idle().then(() => syntaxStyle.destroy())
   })
 
   return (
@@ -165,8 +221,12 @@ export function PreviewOverlay(props: {
           const content = state().content
           return content?.kind === "image" ? content : undefined
         }
+        const file = () => {
+          const content = state().content
+          return content?.kind === "file" ? content : undefined
+        }
         const overlayHeight = () =>
-          image() === undefined
+          image() === undefined && file() === undefined
             ? Math.min(MAX_OVERLAY_HEIGHT, Math.max(6, lines().length + 4))
             : MAX_OVERLAY_HEIGHT
         const position = () =>
@@ -197,10 +257,10 @@ export function PreviewOverlay(props: {
             <text fg="#79d279">
               {state().target.kind} · {state().target.source}
             </text>
-            <Show
-              when={image()}
-              fallback={<For each={lines()}>{(line) => <text fg="#dddddd">{line}</text>}</For>}
-            >
+            <Show when={file()}>
+              {(content) => <FilePreviewBody content={content()} syntaxStyle={syntaxStyle} />}
+            </Show>
+            <Show when={image()}>
               {(content) => (
                 <>
                   <text fg="#ffffff">{content().title}</text>
@@ -215,6 +275,9 @@ export function PreviewOverlay(props: {
                   />
                 </>
               )}
+            </Show>
+            <Show when={file() === undefined && image() === undefined}>
+              <For each={lines()}>{(line) => <text fg="#dddddd">{line}</text>}</For>
             </Show>
           </box>
         )
