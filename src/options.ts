@@ -1,5 +1,5 @@
-import type { PreviewSources } from "./preview/load-preview.js"
-import type { PreviewDisplayOptions } from "./ui/preview-overlay-layout.js"
+import type { PreviewSources } from "./core/preview-policy.js"
+import type { PreviewDisplayOptions } from "./infrastructure/ui/preview-overlay-layout.js"
 
 export interface PluginOptions {
   readonly enabled: boolean

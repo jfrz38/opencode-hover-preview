@@ -164,15 +164,25 @@ make install
 make check
 ```
 
-Run type validation or tests separately:
+Run lint, type validation, or tests separately:
 
 ```sh
+make lint
 make build
 make test
 ```
 
-`make build` checks TypeScript types without emitting artifacts. Pull requests
-to `develop` and `main` run the same checks in CI.
+`make lint` also enforces the dependency boundary between the framework-independent
+core and infrastructure. `make build` checks TypeScript types without emitting
+artifacts. Pull requests to `develop` and `main` run the same checks in CI.
+
+The source is organized around two explicit boundaries:
+
+- `src/core` contains framework-independent preview models and policies.
+- `src/infrastructure` contains filesystem, HTTP, OpenTUI, cache, media, and UI
+  adapters.
+
+Infrastructure may depend on the core, but the core cannot import infrastructure.
 
 ## License
 
