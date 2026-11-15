@@ -82,7 +82,8 @@ File previews:
 - reject `file://`, unsupported URI schemes, and plain unlinked paths;
 - read at most 64 KiB;
 - read supported images up to 10 MiB and validate their binary signature;
-- reject directories, unsupported binary data, and invalid UTF-8;
+- reject directories and silently ignore unsupported binary data or invalid
+  UTF-8;
 - show at most 20 lines and 4,000 characters.
 
 URL previews:
@@ -92,7 +93,8 @@ URL previews:
   and other non-public ranges;
 - revalidate up to three manual redirects;
 - time out after three seconds;
-- accept only HTML and read at most 256 KiB;
+- accept only HTML and silently ignore other document formats; read at most
+  256 KiB;
 - accept PNG, JPEG, GIF, and WebP only when the response MIME matches its
   binary signature, and read at most 10 MiB;
 - extract text metadata without executing or rendering remote HTML.

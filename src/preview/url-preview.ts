@@ -271,9 +271,9 @@ export async function loadUrlPreview(
         }
       }
       if (contentType.startsWith("image/")) {
-        return unavailable("The URL returned an unsupported image format.")
+        return undefined
       }
-      if (!contentType.startsWith("text/html")) return unavailable("The URL did not return an HTML document.")
+      if (!contentType.startsWith("text/html")) return undefined
 
       const htmlBytes = await readLimitedBytes(response, controller.signal, MAX_HTML_BYTES)
       if (htmlBytes === undefined) return unavailable("The HTML document is too large to preview.")

@@ -127,7 +127,7 @@ export async function loadFilePreview(
     }
 
     const text = sanitizedText(bytes)
-    if (text === undefined) return unavailable("Binary files are not shown.")
+    if (text === undefined) return undefined
 
     const preview = truncateText(text)
     const relativePath = relative(workspacePath, resolvedPath).split(sep).join("/")

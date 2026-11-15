@@ -107,7 +107,7 @@ describe("workspace file previews", () => {
     })
   })
 
-  test("rejects binary files and truncates large text", async () => {
+  test("silently ignores binary files and truncates large text", async () => {
     const root = await workspace()
     await writeFile(join(root, "binary.bin"), new Uint8Array([1, 0, 2]))
     await writeFile(
@@ -117,10 +117,7 @@ describe("workspace file previews", () => {
 
     expect(
       await loadFilePreview(target("./binary.bin"), root, new AbortController().signal),
-    ).toMatchObject({
-      kind: "unavailable",
-      description: "Binary files are not shown.",
-    })
+    ).toBeUndefined()
     const large = await loadFilePreview(target("./large.txt"), root, new AbortController().signal)
     expect(large).toMatchObject({ kind: "file", truncated: true })
     if (large?.kind === "file") expect(large.body.split("\n")).toHaveLength(20)

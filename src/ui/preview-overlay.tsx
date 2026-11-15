@@ -25,7 +25,7 @@ interface HoverTarget {
 }
 
 interface PreviewState extends HoverTarget {
-  readonly content?: PreviewContent
+  readonly content: PreviewContent
 }
 
 function isInsideOverlay(renderable: Renderable): boolean {
@@ -35,12 +35,6 @@ function isInsideOverlay(renderable: Renderable): boolean {
     current = current.parent
   }
   return false
-}
-
-function canShowLoading(target: PreviewTarget, options: PreviewOptions): boolean {
-  return target.kind === "url"
-    ? options.urlPreview && options.imagePreview
-    : options.filePreview && options.imagePreview
 }
 
 function FilePreviewBody(props: {
@@ -127,9 +121,6 @@ export function PreviewOverlay(props: {
     const currentGeneration = ++generation
     activeLoad?.abort()
     activeLoad = undefined
-    if (canShowLoading(candidate.target, props.previewOptions)) {
-      setVisible(candidate)
-    }
 
     const key = `${candidate.target.kind}:${candidate.target.value}`
     const cached = cache.get(key)
@@ -221,8 +212,7 @@ export function PreviewOverlay(props: {
     <Show when={visible()}>
       {(state) => {
         const lines = () => {
-          const content = state().content
-          return content === undefined ? ["Loading preview…"] : previewTextLines(content, props.showDetails)
+          return previewTextLines(state().content, props.showDetails)
         }
         const image = () => {
           const content = state().content
