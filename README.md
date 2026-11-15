@@ -13,22 +13,6 @@ application or leaving the current session.
 
 ![Demo of URL, workspace file, and image hover previews in OpenCode](./assets/example.gif)
 
-## Supported previews
-
-| Target | Preview |
-| --- | --- |
-| Public HTTP(S) URL | Page title and description |
-| `@file` mention | Formatted workspace file excerpt |
-| Markdown link to a workspace file | Formatted workspace file excerpt |
-| Local image mention or Markdown link | Bounded PNG, JPEG, GIF, or WebP image |
-| Direct public HTTP(S) image URL | Bounded PNG, JPEG, GIF, or WebP image |
-
-Markdown files render as terminal Markdown. Other text files use OpenTUI's
-syntax highlighter when it recognizes the extension and remain readable as
-plain text otherwise.
-
-![TypeScript file preview with syntax highlighting in OpenCode](./assets/ts-file.png)
-
 ## Install
 
 OpenCode Hover Preview requires OpenCode 2 and a terminal with mouse input.
@@ -62,6 +46,22 @@ for half a second on either:
 - a workspace file mention such as `@README.md`.
 
 A preview overlay should appear next to the target.
+
+## Supported previews
+
+| Target | Preview |
+| --- | --- |
+| Public HTTP(S) URL | Page title and description |
+| `@file` mention | Formatted workspace file excerpt |
+| Markdown link to a workspace file | Formatted workspace file excerpt |
+| Local image mention or Markdown link | Bounded PNG, JPEG, GIF, or WebP image |
+| Direct public HTTP(S) image URL | Bounded PNG, JPEG, GIF, or WebP image |
+
+Markdown files render as terminal Markdown. Other text files use OpenTUI's
+syntax highlighter when it recognizes the extension and remain readable as
+plain text otherwise.
+
+![TypeScript file preview with syntax highlighting in OpenCode](./assets/ts-file.png)
 
 ## Configure
 
