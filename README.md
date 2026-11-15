@@ -27,6 +27,8 @@ Markdown files render as terminal Markdown. Other text files use OpenTUI's
 syntax highlighter when it recognizes the extension and remain readable as
 plain text otherwise.
 
+![TypeScript file preview with syntax highlighting in OpenCode](./assets/ts-file.png)
+
 ## Install
 
 OpenCode Hover Preview requires OpenCode 2 and a terminal with mouse input.
