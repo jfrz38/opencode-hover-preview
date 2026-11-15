@@ -1,4 +1,4 @@
-export type PreviewTargetKind = "url" | "path" | "file-mention" | "image-placeholder" | "pasted-placeholder"
+export type PreviewTargetKind = "url" | "file-mention" | "file-link"
 export type PreviewTargetSource = "text" | "link-metadata" | "markdown-projection"
 
 export interface PreviewTarget {
@@ -10,12 +10,32 @@ export interface PreviewTarget {
 }
 
 const patterns: ReadonlyArray<readonly [PreviewTargetKind, RegExp]> = [
-  ["url", /https?:\/\/[^\s<>()\]]+/gu],
-  ["image-placeholder", /\[Image ?\d+\]/gu],
-  ["pasted-placeholder", /\[Pasted ~?\d+ lines?\]/giu],
+  ["url", /https?:\/\/[^\s<>()\]]+/giu],
   ["file-mention", /@[\w./\\-]+/gu],
-  ["path", /(?:[A-Za-z]:[\\/]|\.\.?(?:[\\/])|\/)[^\s<>()\]]+/gu],
 ]
+
+const URI_SCHEME = /^[A-Za-z][A-Za-z\d+.-]*:/u
+const WINDOWS_ABSOLUTE_PATH = /^[A-Za-z]:[\\/]/u
+
+export function linkPreviewTarget(
+  value: string,
+  source: Exclude<PreviewTargetSource, "text">,
+  start: number,
+  end: number,
+): PreviewTarget | undefined {
+  if (/^https?:\/\//iu.test(value)) {
+    return { kind: "url", value, source, start, end }
+  }
+  if (
+    value === "" ||
+    value.startsWith("#") ||
+    value.startsWith("//") ||
+    (URI_SCHEME.test(value) && !WINDOWS_ABSOLUTE_PATH.test(value))
+  ) {
+    return undefined
+  }
+  return { kind: "file-link", value, source, start, end }
+}
 
 export function findPreviewTargets(text: string): PreviewTarget[] {
   const targets = patterns.flatMap(([kind, pattern]) =>

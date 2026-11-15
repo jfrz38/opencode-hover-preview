@@ -3,10 +3,11 @@ import { PreviewCache } from "../../src/preview/preview-cache.js"
 import type { PreviewContent } from "../../src/domain/preview-content.js"
 
 const content: PreviewContent = {
-  kind: "placeholder",
-  placeholder: "image",
-  title: "[Image 1]",
-  description: "Image",
+  kind: "file",
+  title: "README.md",
+  path: "README.md",
+  body: "# Project",
+  truncated: false,
 }
 
 describe("preview cache", () => {

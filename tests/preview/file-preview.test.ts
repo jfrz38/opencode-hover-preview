@@ -13,8 +13,14 @@ async function workspace(): Promise<string> {
   return directory
 }
 
-function target(value: string, kind: "path" | "file-mention" = "path"): PreviewTarget {
-  return { kind, value, source: "text", start: 0, end: value.length }
+function target(value: string, kind: "file-link" | "file-mention" = "file-link"): PreviewTarget {
+  return {
+    kind,
+    value,
+    source: kind === "file-link" ? "markdown-projection" : "text",
+    start: 0,
+    end: value.length,
+  }
 }
 
 afterEach(async () => {
@@ -62,6 +68,23 @@ describe("workspace file previews", () => {
     ).toMatchObject({
       kind: "unavailable",
       description: "The file is outside the current workspace.",
+    })
+  })
+
+  test("decodes file links and ignores their query and fragment", async () => {
+    const root = await workspace()
+    await writeFile(join(root, "my file.md"), "# Linked file\n")
+
+    expect(
+      await loadFilePreview(
+        target("./my%20file.md?view=source#heading"),
+        root,
+        new AbortController().signal,
+      ),
+    ).toMatchObject({
+      kind: "file",
+      title: "my file.md",
+      path: "my file.md",
     })
   })
 

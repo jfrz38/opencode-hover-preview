@@ -68,4 +68,19 @@ describe("Markdown inline projection", () => {
       ],
     })
   })
+
+  test("maps local file links and ignores unsupported schemes", () => {
+    expect(projectMarkdownInline("[read me](./docs/README%20first.md#start) [mail](mailto:a@b.test)")).toEqual({
+      text: "read me mail",
+      targets: [
+        {
+          kind: "file-link",
+          value: "./docs/README%20first.md#start",
+          source: "markdown-projection",
+          start: 0,
+          end: 7,
+        },
+      ],
+    })
+  })
 })

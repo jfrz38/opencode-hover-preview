@@ -15,12 +15,6 @@ export type PreviewContent =
       readonly url: string
     }
   | {
-      readonly kind: "placeholder"
-      readonly placeholder: "image" | "pasted"
-      readonly title: string
-      readonly description: string
-    }
-  | {
       readonly kind: "unavailable"
       readonly title: string
       readonly description: string
