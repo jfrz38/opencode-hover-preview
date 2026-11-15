@@ -11,7 +11,7 @@ OpenCode Hover Preview adds contextual previews to the OpenCode terminal UI.
 Rest the pointer on a supported target to inspect it without opening another
 application or leaving the current session.
 
-![Demo of URL, workspace file, and image hover previews in OpenCode](./assets/example.gif)
+![Demo of URL, workspace file, and image hover previews in OpenCode](https://raw.githubusercontent.com/jfrz38/opencode-hover-preview/main/assets/example.gif)
 
 ## Install
 
@@ -61,7 +61,7 @@ Markdown files render as terminal Markdown. Other text files use OpenTUI's
 syntax highlighter when it recognizes the extension and remain readable as
 plain text otherwise.
 
-![TypeScript file preview with syntax highlighting in OpenCode](./assets/ts-file.png)
+![TypeScript file preview with syntax highlighting in OpenCode](https://raw.githubusercontent.com/jfrz38/opencode-hover-preview/main/assets/ts-file.png)
 
 ## Configure
 
@@ -119,53 +119,41 @@ to `false` to prevent workspace file reads.
 
 ## Compatibility and limitations
 
-OpenCode does not expose a public inline-hover provider. The plugin therefore
-observes OpenTUI's root mouse dispatcher without consuming mouse events. An
-OpenCode or OpenTUI change to that internal behavior can require a plugin
-update.
+The plugin integrates with OpenCode 2 through OpenTUI mouse handling because
+OpenCode does not expose a public inline-hover API. Changes in OpenCode or
+OpenTUI may therefore require a plugin update.
 
-Target discovery also depends on the information OpenCode retains for the
-rendered cell:
+Preview availability depends on the target information retained by OpenCode:
 
-- HTTP(S) and local Markdown links work when their source or destination
-  metadata remains available.
-- A flattened OSC 8 label cannot be previewed after its destination has been
-  discarded.
+- Links cannot be previewed when their destination is no longer available.
 - Plain local paths are not detected; use an `@file` mention or a Markdown
   link.
 - Attachment placeholders such as `[Image N]` and pasted-content placeholders
-  cannot be mapped reliably to their original content.
-- OpenTUI selects Kitty, Sixel, or a terminal-block fallback for images
-  according to terminal capabilities. GIF animation is not guaranteed.
+  cannot be mapped to their original content.
+- Image rendering depends on terminal capabilities, and GIF animation is not
+  guaranteed.
 
 OpenCode's native image-preview settings handle attachments independently of
 this plugin.
 
 ## Security boundaries
 
-File previews:
+The plugin reads workspace files and makes network requests only for the
+preview sources you enable.
 
-- remain inside the current workspace, including after resolving symlinks;
-- accept `@file` mentions and local Markdown link destinations;
-- reject `file://`, unsupported URI schemes, directories, invalid UTF-8, and
-  unsupported binary data;
-- read at most 64 KiB of text and show at most 20 lines or 4,000 characters;
-- read supported images up to 10 MiB and validate their binary signature.
-
-URL previews:
-
-- accept HTTP(S) on standard ports without embedded credentials;
-- reject DNS results in loopback, private, link-local, documentation,
-  multicast, and other non-public ranges;
-- revalidate up to three redirects and time out after three seconds;
-- read at most 256 KiB of HTML without executing or rendering it;
-- read images up to 10 MiB only when the response MIME type matches the binary
+- File previews remain inside the current workspace, including after resolving
+  symbolic links.
+- Text previews inspect only the beginning of a file and show at most 20 lines
+  or 4,000 characters.
+- Local and remote images are limited to 10 MiB and validated by their binary
   signature.
+- Network previews accept only public HTTP(S) URLs on standard ports, validate
+  each redirect, and time out after three seconds.
+- Remote HTML is limited to 256 KiB and parsed as text without executing it.
 
 DNS validation reduces accidental access to local services but is not a
-complete defense against DNS rebinding because the runtime resolves the
-hostname again for the request. Localhost and private-network URLs are not
-supported.
+complete defense against DNS rebinding. Localhost and private-network URLs are
+not supported.
 
 ## Development
 
