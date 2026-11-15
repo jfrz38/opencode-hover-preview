@@ -1,8 +1,8 @@
 # Hover feasibility experiments
 
-This document records tests that must pass before defining an MVP. Results are
-kept separate because the prompt, transcript, attachments, and file mentions
-are different OpenCode surfaces.
+This document records the host feasibility findings for the focused file and
+URL preview. Results are kept separate because the prompt, transcript, and file
+mentions are different OpenCode surfaces.
 
 ## Important baseline
 
@@ -12,7 +12,7 @@ renderer. The diagnostic therefore contains an explicitly experimental adapter
 that observes the OpenTUI root mouse dispatcher. A production plugin must not
 claim compatibility based only on that adapter.
 
-OpenCode also has native image preview settings:
+OpenCode has native image preview settings:
 
 ```json
 {
@@ -22,7 +22,7 @@ OpenCode also has native image preview settings:
 }
 ```
 
-Test pasted images both with those settings enabled and disabled.
+Images are therefore outside this plugin's scope.
 
 ## Load the plugin
 
@@ -62,16 +62,14 @@ using the renderable's public line, wrapping, scroll, and text data.
 | Assistant response | Markdown URL with retained source/metadata | Conditional | Exact cell | Yes | Experimental |
 | Assistant response | Flattened Markdown label | No | None | Yes | No-go |
 | Assistant response | Plain URL | Literal target | Exact cell | Yes | Experimental |
-| Assistant response | Local path | Literal target | Exact cell | Yes | Experimental |
-| Prompt | Pasted URL/path | Literal target | Exact cell | Yes | Experimental |
-| Prompt | `[Image 1]` | Placeholder text only | Exact cell | Yes | Experimental |
-| Prompt | `[Pasted ~N lines]` | Placeholder text only | Exact cell | Yes | Content no-go |
+| Assistant response | Markdown link to workspace file | Conditional | Exact cell | Yes | Experimental |
+| Prompt | Pasted HTTP(S) URL | Literal target | Exact cell | Yes | Experimental |
 | Prompt | `@README.md` | Literal target | Exact cell | Yes | Experimental |
-| Sent user message | URL/path/attachment | Pending | Pending | Pending | Pending |
+| Sent user message | HTTP(S) URL/`@file`/local file link | Pending | Pending | Pending | Pending |
 
 ## Protocol
 
-For each row:
+For each supported row:
 
 1. Hover without moving until the configured delay elapses.
 2. Record the diagnostic renderable class, ID, bounds, target kind, and
@@ -94,10 +92,9 @@ source. This covers ordinary links, emphasis, inline code, escapes, and line
 breaks. Unknown inline token types fail closed instead of estimating a wrong
 range.
 
-As a negative check, hover menus, empty space, ordinary prose, and portions of
-a prompt outside a URL, path, `[Image N]`, `[Pasted ~N lines]`, or `@file`
-mention. No overlay should
-appear in those locations.
+As a negative check, hover menus, empty space, ordinary prose, plain local
+paths, `[Image N]`, `[Pasted ~N lines]`, and unsupported link schemes. No
+overlay should appear in those locations.
 
 ## Confirmed host limitations
 
@@ -108,10 +105,13 @@ concealed source. The OSC 8 destination is not available through the observed
 OpenTUI API. The plugin therefore fails closed rather than inferring a URL from
 the label.
 
-The extmark intersecting `[Pasted ~3 lines]` was a virtual `prompt-part` with
-no metadata. The placeholder can be identified precisely, but its original
-content cannot be recovered. A pasted-content preview requires a future
-OpenCode composer API or metadata that contains the original text.
+The extmark intersecting `[Pasted ~3 lines]` was a virtual `prompt-part` with no
+metadata. The placeholder can be identified precisely, but its original content
+cannot be recovered. A pasted-content preview requires a future OpenCode
+composer API or metadata that contains the original text. The current session
+API can expose attachments after a message is sent, but does not provide a
+reliable inline-hover identity for composer placeholders. Placeholder previews
+were removed rather than presenting incomplete behavior.
 
 The temporary unresolved probe was removed after collecting this evidence.
 Ordinary text no longer activates the overlay.

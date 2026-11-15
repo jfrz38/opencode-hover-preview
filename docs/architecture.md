@@ -5,8 +5,8 @@ integration without introducing a framework or dependency-injection container.
 
 ## Modules
 
-- `src/domain`: target and preview value types plus deterministic hover and
-  overlay behavior.
+- `src/domain`: target classification and preview value types plus deterministic
+  hover and overlay behavior.
 - `src/opentui`: the experimental mouse adapter, renderable inspection,
   Markdown projection, and terminal-cell hit testing.
 - `src/preview`: bounded file and URL loaders, capability coordination, and the
@@ -22,7 +22,8 @@ boundaries are testable without a terminal.
 
 1. The OpenTUI adapter observes a mouse event without consuming it.
 2. The renderable inspector resolves a target only when the exact terminal cell
-   intersects its displayed range.
+   intersects its displayed range. Link metadata and projected Markdown share
+   one classifier for public HTTP(S) and workspace-file destinations.
 3. The hover delay starts one cancelable preview load.
 4. The loader returns a bounded `PreviewContent` value.
 5. The UI renders plain text and caches only successful results in memory.
