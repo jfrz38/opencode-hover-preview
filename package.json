@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@opencode/plugin": "2.3.0",
+    "@opencode/theme": "2.3.0",
     "marked": "17.0.1"
   },
   "peerDependencies": {
