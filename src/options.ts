@@ -3,6 +3,7 @@ export interface PluginOptions {
   readonly hoverDelayMs: number
   readonly urlPreview: boolean
   readonly filePreview: boolean
+  readonly imagePreview: boolean
 }
 
 const DEFAULT_HOVER_DELAY_MS = 500
@@ -16,5 +17,6 @@ export function parseOptions(input: Readonly<Record<string, unknown>>): PluginOp
     hoverDelayMs: Math.max(0, Math.min(requestedDelay, MAX_HOVER_DELAY_MS)),
     urlPreview: input.urlPreview !== false,
     filePreview: input.filePreview !== false,
+    imagePreview: input.imagePreview !== false,
   }
 }

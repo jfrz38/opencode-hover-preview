@@ -2,6 +2,7 @@ import { open, realpath, stat } from "node:fs/promises"
 import { basename, extname, isAbsolute, relative, resolve, sep } from "node:path"
 import type { PreviewContent } from "../domain/preview-content.js"
 import type { PreviewTarget } from "../domain/preview-target.js"
+import { detectImageMime, MAX_IMAGE_BYTES } from "./image-format.js"
 
 const MAX_READ_BYTES = 64 * 1024
 const MAX_PREVIEW_CHARACTERS = 4_000
@@ -54,15 +55,25 @@ function truncateText(text: string): { readonly body: string; readonly truncated
   }
 }
 
-async function readPrefix(path: string, size: number, signal: AbortSignal): Promise<Uint8Array> {
+async function readPrefix(
+  path: string,
+  size: number,
+  signal: AbortSignal,
+  maxBytes = MAX_READ_BYTES,
+): Promise<Uint8Array> {
   const file = await open(path, "r")
   try {
     signal.throwIfAborted()
-    const length = Math.min(size, MAX_READ_BYTES + 1)
+    const length = Math.min(size, maxBytes + 1)
     const buffer = new Uint8Array(length)
-    const { bytesRead } = await file.read(buffer, 0, length, 0)
-    signal.throwIfAborted()
-    return buffer.subarray(0, bytesRead)
+    let offset = 0
+    while (offset < length) {
+      signal.throwIfAborted()
+      const { bytesRead } = await file.read(buffer, offset, length - offset, offset)
+      if (bytesRead === 0) break
+      offset += bytesRead
+    }
+    return buffer.subarray(0, offset)
   } finally {
     await file.close()
   }
@@ -72,6 +83,7 @@ export async function loadFilePreview(
   target: PreviewTarget,
   workspace: string,
   signal: AbortSignal,
+  imagePreview = true,
 ): Promise<PreviewContent> {
   const requestedPath = targetPath(target)
   if (requestedPath === undefined || requestedPath.length === 0) {
@@ -95,6 +107,25 @@ export async function loadFilePreview(
     if (!fileStat.isFile()) return unavailable("The target is not a regular file.")
 
     const bytes = await readPrefix(resolvedPath, fileStat.size, signal)
+    const imageMime = detectImageMime(bytes)
+    if (imageMime !== undefined) {
+      if (!imagePreview) return unavailable("Image previews are disabled by plugin configuration.")
+      if (fileStat.size > MAX_IMAGE_BYTES) return unavailable("The image is too large to preview.")
+
+      const imageData = await readPrefix(resolvedPath, fileStat.size, signal, MAX_IMAGE_BYTES)
+      if (detectImageMime(imageData) !== imageMime) {
+        return unavailable("The image format could not be validated.")
+      }
+      const relativePath = relative(workspacePath, resolvedPath).split(sep).join("/")
+      return {
+        kind: "image",
+        title: basename(resolvedPath),
+        location: relativePath,
+        mime: imageMime,
+        data: imageData,
+      }
+    }
+
     const text = sanitizedText(bytes)
     if (text === undefined) return unavailable("Binary files are not shown.")
 
