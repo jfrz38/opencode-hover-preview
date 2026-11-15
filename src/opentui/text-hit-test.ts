@@ -58,11 +58,16 @@ export function findTargetAtTextCell(
   const visualStartColumn = layout.lineInfo.lineStartCols[visualLine]
   const visualWidth = layout.lineInfo.lineWidthCols[visualLine]
   if (sourceLine === undefined || visualStartColumn === undefined || visualWidth === undefined) return undefined
+  const sourceStartColumn = layout.lineInfo.lineStartCols.find(
+    (_column, index) =>
+      layout.lineInfo.lineSources[index] === sourceLine && layout.lineInfo.lineWraps[index] === 0,
+  )
+  if (sourceStartColumn === undefined) return undefined
 
   const columnInVisualLine = Math.floor(cell.x) - alignmentPadding(layout, visualLine)
   if (columnInVisualLine < 0 || columnInVisualLine >= visualWidth) return undefined
 
-  const sourceColumn = visualStartColumn + columnInVisualLine + layout.scrollX
+  const sourceColumn = visualStartColumn - sourceStartColumn + columnInVisualLine + layout.scrollX
   return targets
     .map((target) => targetColumns(text, target))
     .find(
