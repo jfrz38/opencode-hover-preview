@@ -8,8 +8,8 @@ when the pointer rests on a supported inline target.
 | Target | Preview |
 | --- | --- |
 | Public HTTP(S) URL | Page title, host, description, and sanitized URL |
-| `@file` mention | Text excerpt from the workspace file |
-| Markdown link to a workspace file | File name, relative path, and text excerpt |
+| `@file` mention | Formatted workspace file excerpt |
+| Markdown link to a workspace file | File name, relative path, and formatted excerpt |
 | `@image` mention or Markdown link to an image | Bounded PNG, JPEG, GIF, or WebP image |
 | Direct public HTTP(S) image URL | Bounded PNG, JPEG, GIF, or WebP image |
 
@@ -93,6 +93,18 @@ DNS validation reduces accidental access to local services but is not a complete
 defense against DNS rebinding because the local runtime resolves the hostname
 again for the request. Localhost and private-network HTTP(S) URLs are not
 supported. Set `urlPreview` to `false` when network access must be prohibited.
+
+## Formatted file previews
+
+Markdown files render as terminal Markdown, including headings, lists, emphasis,
+tables, and fenced code blocks. This is a terminal representation rather than
+an exact reproduction of GitHub's HTML rendering.
+
+Other files use OpenTUI's native syntax highlighter. Common extension aliases
+such as `.js`, `.jsx`, `.ts`, and `.tsx` are mapped to their canonical
+filetypes. OpenTUI 0.8.4 includes parsers for JavaScript, TypeScript, TSX,
+Markdown, and Zig. If no parser recognizes an extension, the original text is
+still shown without syntax colors.
 
 ## Image previews
 
