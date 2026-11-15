@@ -36,7 +36,7 @@ After `bun install`, add this repository as a TUI-only plugin in the global
   "$schema": "https://opencode.ai/v2/cli.json",
   "plugins": [
     {
-      "package": "C:/Users/JoseF/git/opencode-link-preview",
+      "package": "C:/Users/JoseF/git/opencode-hover-preview",
       "options": {
         "enabled": true,
         "hoverDelayMs": 500,

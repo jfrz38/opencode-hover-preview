@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "opencode-link-preview",
+      "name": "opencode-hover-preview",
       "dependencies": {
         "@opencode/plugin": "2.3.0",
         "@opencode/theme": "2.3.0",

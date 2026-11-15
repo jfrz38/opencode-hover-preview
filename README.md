@@ -1,4 +1,4 @@
-# opencode-link-preview
+# opencode-hover-preview
 
 Experimental OpenCode TUI plugin that shows contextual file and URL previews
 when the pointer rests on a supported inline target.
@@ -36,7 +36,7 @@ Reference the package from the OpenCode TUI configuration:
   "$schema": "https://opencode.ai/v2/cli.json",
   "plugins": [
     {
-      "package": "C:/path/to/opencode-link-preview",
+      "package": "C:/path/to/opencode-hover-preview",
       "options": {
         "enabled": true,
         "hoverDelayMs": 500,

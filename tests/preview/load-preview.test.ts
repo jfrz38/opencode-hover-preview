@@ -27,7 +27,7 @@ function options(overrides: Partial<PreviewOptions> = {}): PreviewOptions {
 }
 
 async function workspace(): Promise<string> {
-  const directory = await mkdtemp(join(tmpdir(), "opencode-link-preview-options-"))
+  const directory = await mkdtemp(join(tmpdir(), "opencode-hover-preview-options-"))
   workspaces.push(directory)
   return directory
 }

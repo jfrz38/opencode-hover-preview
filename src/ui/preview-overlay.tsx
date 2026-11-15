@@ -17,7 +17,7 @@ const OVERLAY_WIDTH = 70
 const MAX_OVERLAY_HEIGHT = 16
 const FILE_BODY_HEIGHT = 8
 const IMAGE_HEIGHT = 10
-const OVERLAY_ID = "opencode-link-preview.overlay"
+const OVERLAY_ID = "opencode-hover-preview.overlay"
 
 interface HoverTarget {
   readonly pointer: Point

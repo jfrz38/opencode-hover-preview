@@ -8,7 +8,7 @@ import type { PreviewTarget } from "../../src/domain/preview-target.js"
 const workspaces: string[] = []
 
 async function workspace(): Promise<string> {
-  const directory = await mkdtemp(join(tmpdir(), "opencode-link-preview-"))
+  const directory = await mkdtemp(join(tmpdir(), "opencode-hover-preview-"))
   workspaces.push(directory)
   return directory
 }
