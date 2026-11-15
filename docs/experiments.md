@@ -48,7 +48,10 @@ After `bun install`, add this repository as a TUI-only plugin in the global
         "display": {
           "showDetails": false,
           "width": 70,
-          "height": 16
+          "height": 16,
+          "image": {
+            "allowUpscale": false
+          }
         }
       }
     }

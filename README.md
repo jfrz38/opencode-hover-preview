@@ -48,7 +48,10 @@ Reference the package from the OpenCode TUI configuration:
         "display": {
           "showDetails": false,
           "width": 70,
-          "height": 16
+          "height": 16,
+          "image": {
+            "allowUpscale": false
+          }
         }
       }
     }
@@ -76,6 +79,10 @@ Run `/reload` after changing the plugin or its configuration.
   It applies equally to images, files, and text previews. Images scale to fit
   the available interior, while text and file content are clipped when needed.
   Both dimensions are reduced automatically when the terminal is smaller.
+- `display.image.allowUpscale`: allows images to grow beyond their original
+  pixel dimensions; defaults to `false`. The limit is applied when the terminal
+  reports its pixel resolution; otherwise OpenTUI falls back to fitting the
+  image within the available preview area.
 
 Preview dimensions accept positive integers. Fractional values are rounded down
 and values below the renderable minimum are raised.

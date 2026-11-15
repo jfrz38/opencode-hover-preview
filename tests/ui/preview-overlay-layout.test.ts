@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import type { PreviewContent } from "../../src/domain/preview-content.js"
 import {
   calculatePreviewOverlayLayout,
+  imageCellSizeAtNativeScale,
   type PreviewDisplayOptions,
 } from "../../src/ui/preview-overlay-layout.js"
 
@@ -31,6 +32,9 @@ function layout(
     showDetails: false,
     width: 70,
     height: 16,
+    image: {
+      allowUpscale: false,
+    },
     ...overrides.display,
   }
   return calculatePreviewOverlayLayout({
@@ -43,11 +47,29 @@ function layout(
 }
 
 describe("preview overlay layout", () => {
+  test("converts native image pixels to terminal cells when resolution is known", () => {
+    expect(
+      imageCellSizeAtNativeScale(
+        { width: 800, height: 600 },
+        { width: 100, height: 40 },
+        { width: 1000, height: 800 },
+      ),
+    ).toEqual({ width: 80, height: 30 })
+    expect(
+      imageCellSizeAtNativeScale(
+        { width: 800, height: 600 },
+        { width: 100, height: 40 },
+        null,
+      ),
+    ).toBeUndefined()
+  })
+
   test("uses the same fixed window height for file, image, and text previews", () => {
     expect(layout(file())).toEqual({
       width: 70,
       height: 16,
       fileBodyHeight: 14,
+      imageWidth: 0,
       imageHeight: 0,
     })
     expect(layout(file(true))).toMatchObject({ height: 16, fileBodyHeight: 13 })
@@ -55,6 +77,7 @@ describe("preview overlay layout", () => {
       width: 70,
       height: 16,
       fileBodyHeight: 0,
+      imageWidth: 66,
       imageHeight: 14,
     })
     const text: PreviewContent = {
@@ -66,6 +89,7 @@ describe("preview overlay layout", () => {
       width: 70,
       height: 16,
       fileBodyHeight: 0,
+      imageWidth: 0,
       imageHeight: 0,
     })
   })
@@ -95,6 +119,7 @@ describe("preview overlay layout", () => {
       width: 45,
       height: 6,
       fileBodyHeight: 4,
+      imageWidth: 0,
       imageHeight: 0,
     })
     expect(
@@ -110,7 +135,23 @@ describe("preview overlay layout", () => {
       width: 0,
       height: 0,
       fileBodyHeight: 0,
+      imageWidth: 0,
       imageHeight: 0,
     })
+  })
+
+  test("does not enlarge images beyond their natural terminal-cell size by default", () => {
+    expect(
+      layout(image, {
+        display: { width: 100, height: 40 },
+        naturalImageSize: { width: 20, height: 8 },
+      }),
+    ).toMatchObject({ imageWidth: 20, imageHeight: 8 })
+    expect(
+      layout(image, {
+        display: { width: 100, height: 40, image: { allowUpscale: true } },
+        naturalImageSize: { width: 20, height: 8 },
+      }),
+    ).toMatchObject({ imageWidth: 96, imageHeight: 38 })
   })
 })

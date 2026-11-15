@@ -30,6 +30,7 @@ export function parseOptions(input: Readonly<Record<string, unknown>>): PluginOp
   const requestedDelay = typeof input.hoverDelayMs === "number" ? input.hoverDelayMs : DEFAULT_HOVER_DELAY_MS
   const sources = record(input.sources)
   const display = record(input.display)
+  const imageDisplay = record(display.image)
   return {
     enabled: input.enabled !== false && input.diagnostic !== false,
     hoverDelayMs: Math.max(0, Math.min(requestedDelay, MAX_HOVER_DELAY_MS)),
@@ -42,6 +43,9 @@ export function parseOptions(input: Readonly<Record<string, unknown>>): PluginOp
       showDetails: display.showDetails === true,
       width: positiveInteger(display.width, DEFAULT_PREVIEW_WIDTH, MIN_PREVIEW_WIDTH),
       height: positiveInteger(display.height, DEFAULT_PREVIEW_HEIGHT, MIN_PREVIEW_HEIGHT),
+      image: {
+        allowUpscale: imageDisplay.allowUpscale === true,
+      },
     },
   }
 }

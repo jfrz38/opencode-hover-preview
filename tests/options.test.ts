@@ -15,6 +15,9 @@ describe("plugin options", () => {
         showDetails: false,
         width: 70,
         height: 16,
+        image: {
+          allowUpscale: false,
+        },
       },
     })
   })
@@ -47,6 +50,9 @@ describe("plugin options", () => {
       showDetails: false,
       width: 90,
       height: 24,
+      image: {
+        allowUpscale: false,
+      },
     })
   })
 
@@ -62,6 +68,9 @@ describe("plugin options", () => {
       showDetails: false,
       width: 70,
       height: 16,
+      image: {
+        allowUpscale: false,
+      },
     })
     expect(parseOptions({ display: { width: 2, height: 1 } }).display).toMatchObject({
       width: 4,
@@ -72,7 +81,12 @@ describe("plugin options", () => {
   test("uses defaults for invalid option groups", () => {
     expect(parseOptions({ sources: null, display: "compact" })).toMatchObject({
       sources: { url: true, file: true, image: true },
-      display: { showDetails: false, width: 70, height: 16 },
+      display: {
+        showDetails: false,
+        width: 70,
+        height: 16,
+        image: { allowUpscale: false },
+      },
     })
   })
 
@@ -88,11 +102,26 @@ describe("plugin options", () => {
       }),
     ).toMatchObject({
       sources: { url: true, file: true, image: true },
-      display: { showDetails: false, width: 70, height: 16 },
+      display: {
+        showDetails: false,
+        width: 70,
+        height: 16,
+        image: { allowUpscale: false },
+      },
     })
   })
 
   test("does not interpret legacy minHeight and maxHeight settings", () => {
     expect(parseOptions({ display: { minHeight: 40, maxHeight: 80 } }).display.height).toBe(16)
+  })
+
+  test("allows image upscaling only when explicitly enabled", () => {
+    expect(parseOptions({}).display.image.allowUpscale).toBe(false)
+    expect(
+      parseOptions({ display: { image: { allowUpscale: true } } }).display.image.allowUpscale,
+    ).toBe(true)
+    expect(
+      parseOptions({ display: { image: { allowUpscale: "true" } } }).display.image.allowUpscale,
+    ).toBe(false)
   })
 })

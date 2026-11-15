@@ -1,6 +1,6 @@
 import { usePlugin } from "@opencode/plugin/tui"
 import { generateSyntax } from "@opencode/theme/tui"
-import type { MouseEvent, Renderable, SyntaxStyle } from "@opentui/core"
+import type { MouseEvent, NativeImage, Renderable, SyntaxStyle } from "@opentui/core"
 import { createSignal, For, onCleanup, Show } from "solid-js"
 import type { PreviewContent } from "../domain/preview-content.js"
 import { HoverDelay, systemTimerScheduler } from "../domain/hover-delay.js"
@@ -14,6 +14,7 @@ import { previewTextLines } from "./preview-content-display.js"
 import { resolveFilePreviewFormat } from "./file-preview-format.js"
 import {
   calculatePreviewOverlayLayout,
+  imageCellSizeAtNativeScale,
   type PreviewDisplayOptions,
 } from "./preview-overlay-layout.js"
 
@@ -26,6 +27,14 @@ interface HoverTarget {
 
 interface PreviewState extends HoverTarget {
   readonly content: PreviewContent
+}
+
+interface LoadedImageSize {
+  readonly data: Uint8Array
+  readonly naturalSize?: {
+    readonly width: number
+    readonly height: number
+  }
 }
 
 function isInsideOverlay(renderable: Renderable): boolean {
@@ -95,6 +104,7 @@ export function PreviewOverlay(props: {
   const syntaxStyle = generateSyntax(context.theme, context.renderer.nativeScene)
   const cache = new PreviewCache()
   const [visible, setVisible] = createSignal<PreviewState>()
+  const [loadedImageSize, setLoadedImageSize] = createSignal<LoadedImageSize>()
   let activeLoad: AbortController | undefined
   let generation = 0
 
@@ -115,6 +125,17 @@ export function PreviewOverlay(props: {
         title: "Image preview unavailable",
         description: "The terminal could not render this image.",
       },
+    })
+  }
+
+  const captureImageSize = (data: Uint8Array, image: NativeImage) => {
+    setLoadedImageSize({
+      data,
+      naturalSize: imageCellSizeAtNativeScale(
+        { width: image.width, height: image.height },
+        { width: context.renderer.terminalWidth, height: context.renderer.terminalHeight },
+        context.renderer.resolution,
+      ),
     })
   }
 
@@ -227,6 +248,10 @@ export function PreviewOverlay(props: {
             lineCount: lines().length,
             viewport: { width: context.renderer.width, height: context.renderer.height },
             display: props.display,
+            naturalImageSize:
+              image()?.data === loadedImageSize()?.data
+                ? loadedImageSize()?.naturalSize
+                : undefined,
           })
         const position = () =>
           positionOverlay(
@@ -278,10 +303,11 @@ export function PreviewOverlay(props: {
                   </For>
                   <image
                     source={content().data}
-                    width={Math.max(0, layout().width - 4)}
+                    width={layout().imageWidth}
                     height={layout().imageHeight}
                     fit="fit"
                     protocol="auto"
+                    onLoad={(image) => captureImageSize(content().data, image)}
                     onError={showImageError}
                   />
                 </>
