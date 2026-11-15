@@ -1,7 +1,51 @@
-# opencode-hover-preview
+# OpenCode Hover Preview
 
-Experimental OpenCode TUI plugin that shows contextual file and URL previews
-when the pointer rests on a supported inline target.
+[![npm version](https://img.shields.io/npm/v/@jfrz38/opencode-hover-preview)](https://www.npmjs.com/package/@jfrz38/opencode-hover-preview)
+[![CI](https://img.shields.io/github/actions/workflow/status/jfrz38/opencode-hover-preview/ci.yml?label=tests)](https://github.com/jfrz38/opencode-hover-preview/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/@jfrz38/opencode-hover-preview)](https://github.com/jfrz38/opencode-hover-preview/blob/main/LICENSE)
+[![npm downloads](https://img.shields.io/npm/dm/@jfrz38/opencode-hover-preview)](https://www.npmjs.com/package/@jfrz38/opencode-hover-preview)
+
+Preview files, images, and public URLs without leaving OpenCode.
+
+OpenCode Hover Preview adds contextual previews to the OpenCode terminal UI.
+Rest the pointer on a supported target to inspect it without opening another
+application or leaving the current session.
+
+![Demo of URL, workspace file, and image hover previews in OpenCode](https://raw.githubusercontent.com/jfrz38/opencode-hover-preview/main/assets/example.gif)
+
+## Install
+
+OpenCode Hover Preview requires OpenCode 2 and a terminal with mouse input.
+
+Install the latest published package globally:
+
+```sh
+opencode plugin add @jfrz38/opencode-hover-preview@latest
+```
+
+Alternatively, add the package to your OpenCode TUI configuration:
+
+```json
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "plugins": [
+    {
+      "package": "@jfrz38/opencode-hover-preview",
+      "options": {}
+    }
+  ]
+}
+```
+
+Run `/reload` after changing the plugin configuration.
+
+To verify the installation, open a workspace in OpenCode and rest the pointer
+for half a second on either:
+
+- a public URL such as `https://opencode.ai`;
+- a workspace file mention such as `@README.md`.
+
+A preview overlay should appear next to the target.
 
 ## Supported previews
 
@@ -10,39 +54,26 @@ when the pointer rests on a supported inline target.
 | Public HTTP(S) URL | Page title and description |
 | `@file` mention | Formatted workspace file excerpt |
 | Markdown link to a workspace file | Formatted workspace file excerpt |
-| `@image` mention or Markdown link to an image | Bounded PNG, JPEG, GIF, or WebP image |
+| Local image mention or Markdown link | Bounded PNG, JPEG, GIF, or WebP image |
 | Direct public HTTP(S) image URL | Bounded PNG, JPEG, GIF, or WebP image |
 
-HTTP(S) and local Markdown links work when OpenCode retains their source or link
-metadata. A flattened OSC 8 label whose destination has already been discarded
-cannot be previewed. Plain local paths are intentionally not detected; use an
-`@file` mention or a Markdown link.
+Markdown files render as terminal Markdown. Other text files use OpenTUI's
+syntax highlighter when it recognizes the extension and remain readable as
+plain text otherwise.
 
-The plugin uses an experimental OpenTUI mouse adapter because OpenCode does not
-currently publish an inline hover provider. Treat compatibility as provisional.
+![TypeScript file preview with syntax highlighting in OpenCode](https://raw.githubusercontent.com/jfrz38/opencode-hover-preview/main/assets/ts-file.png)
 
-## Install for local development
+## Configure
 
-Install dependencies:
-
-```sh
-make install
-```
-
-Install the published plugin:
-
-```sh
-bun add @jfrz38/opencode-hover-preview
-```
-
-Reference the package from the OpenCode TUI configuration:
+The default configuration enables every preview source and uses a compact
+overlay:
 
 ```json
 {
   "$schema": "https://opencode.ai/v2/cli.json",
   "plugins": [
     {
-      "package": "C:/path/to/opencode-hover-preview",
+      "package": "@jfrz38/opencode-hover-preview",
       "options": {
         "enabled": true,
         "hoverDelayMs": 500,
@@ -65,122 +96,84 @@ Reference the package from the OpenCode TUI configuration:
 }
 ```
 
-Run `/reload` after changing the plugin or its configuration.
+| Option | Default | Description |
+| --- | --- | --- |
+| `enabled` | `true` | Enables the plugin. |
+| `hoverDelayMs` | `500` | Delay before loading a preview, clamped from `0` to `10000` milliseconds. |
+| `sources.url` | `true` | Previews public HTTP(S) pages. |
+| `sources.file` | `true` | Previews workspace text files. |
+| `sources.image` | `true` | Previews supported local and remote images. |
+| `display.showDetails` | `false` | Shows paths, hosts, sanitized URLs, and other target metadata. |
+| `display.width` | `70` | Preferred overlay width in terminal columns. |
+| `display.height` | `16` | Preferred overlay height in terminal rows. |
+| `display.image.allowUpscale` | `false` | Allows images to grow beyond their original pixel dimensions when terminal pixel information is available. |
 
-## Options
+The overlay automatically shrinks when the terminal is smaller. Width and
+height accept positive integers; fractional values are rounded down and values
+below the renderable minimum are raised.
 
-- `enabled`: enables the plugin; defaults to `true`.
-- `hoverDelayMs`: delay before loading a preview; defaults to `500` and is
-  clamped between `0` and `10000`.
-- `sources.url`: shows previews for HTTP(S) pages; defaults to `true`. Turning
-  it off does not hide remote images when `sources.image` is enabled.
-- `sources.file`: shows previews for workspace text files; defaults to `true`.
-  Turning it off does not hide local images when `sources.image` is enabled.
-- `sources.image`: shows supported local and remote images; defaults to `true`.
-  Turning it off does not affect HTTP(S) pages or text files.
-- `display.showDetails`: adds target diagnostics and metadata such as file
-  paths, image locations, URL hosts, and sanitized URLs; defaults to `false`.
-- `display.width`: preview window width in terminal columns; defaults to `70`.
-- `display.height`: preview window height in terminal rows; defaults to `16`.
-  It applies equally to images, files, and text previews. Images scale to fit
-  the available interior, while text and file content are clipped when needed.
-  Both dimensions are reduced automatically when the terminal is smaller.
-- `display.image.allowUpscale`: allows images to grow beyond their original
-  pixel dimensions; defaults to `false`. The limit is applied when the terminal
-  reports its pixel resolution; otherwise OpenTUI falls back to fitting the
-  image within the available preview area.
+Image previews remain controlled by `sources.image` even when `sources.url` or
+`sources.file` is disabled. Set both `sources.url` and `sources.image` to
+`false` to prevent network access. Set both `sources.file` and `sources.image`
+to `false` to prevent workspace file reads.
 
-Preview dimensions accept positive integers. Fractional values are rounded down
-and values below the renderable minimum are raised.
+## Compatibility and limitations
 
-Previews use a compact presentation by default: files show their formatted
-content, images show the image, and URLs show the fetched title and description.
-Set `display.showDetails` to `true` to restore the complete metadata display.
+The plugin integrates with OpenCode 2 through OpenTUI mouse handling because
+OpenCode does not expose a public inline-hover API. Changes in OpenCode or
+OpenTUI may therefore require a plugin update.
 
-`diagnostic: false` remains accepted as a legacy alias for `enabled: false`.
+Preview availability depends on the target information retained by OpenCode:
+
+- Links cannot be previewed when their destination is no longer available.
+- Plain local paths are not detected; use an `@file` mention or a Markdown
+  link.
+- Attachment placeholders such as `[Image N]` and pasted-content placeholders
+  cannot be mapped to their original content.
+- Image rendering depends on terminal capabilities, and GIF animation is not
+  guaranteed.
+
+OpenCode's native image-preview settings handle attachments independently of
+this plugin.
 
 ## Security boundaries
 
-File previews:
+The plugin reads workspace files and makes network requests only for the
+preview sources you enable.
 
-- stay inside the current workspace, including after resolving symlinks;
-- accept `@file` mentions and local Markdown link destinations;
-- ignore a local link's query string and fragment when resolving its file;
-- reject `file://`, unsupported URI schemes, and plain unlinked paths;
-- read at most 64 KiB;
-- read supported images up to 10 MiB and validate their binary signature;
-- reject directories and silently ignore unsupported binary data or invalid
-  UTF-8;
-- show at most 20 lines and 4,000 characters.
+- File previews remain inside the current workspace, including after resolving
+  symbolic links.
+- Text previews inspect only the beginning of a file and show at most 20 lines
+  or 4,000 characters.
+- Local and remote images are limited to 10 MiB and validated by their binary
+  signature.
+- Network previews accept only public HTTP(S) URLs on standard ports, validate
+  each redirect, and time out after three seconds.
+- Remote HTML is limited to 256 KiB and parsed as text without executing it.
 
-URL previews:
-
-- accept only HTTP(S) on standard ports without embedded credentials;
-- reject DNS results in loopback, private, link-local, documentation, multicast,
-  and other non-public ranges;
-- revalidate up to three manual redirects;
-- time out after three seconds;
-- accept only HTML and silently ignore other document formats; read at most
-  256 KiB;
-- accept PNG, JPEG, GIF, and WebP only when the response MIME matches its
-  binary signature, and read at most 10 MiB;
-- extract text metadata without executing or rendering remote HTML.
-
-DNS validation reduces accidental access to local services but is not a complete
-defense against DNS rebinding because the local runtime resolves the hostname
-again for the request. Localhost and private-network HTTP(S) URLs are not
-supported. Set both `sources.url` and `sources.image` to `false` when network
-access must be prohibited. Set both `sources.file` and `sources.image` to
-`false` when workspace file reads must be prohibited.
-
-## Formatted file previews
-
-Markdown files render as terminal Markdown, including headings, lists, emphasis,
-tables, and fenced code blocks. This is a terminal representation rather than
-an exact reproduction of GitHub's HTML rendering.
-
-Other files use OpenTUI's native syntax highlighter. Common extension aliases
-such as `.js`, `.jsx`, `.ts`, and `.tsx` are mapped to their canonical
-filetypes. OpenTUI 0.8.4 includes parsers for JavaScript, TypeScript, TSX,
-Markdown, and Zig. If no parser recognizes an extension, the original text is
-still shown without syntax colors.
-
-## Image previews
-
-This plugin renders supported image targets in the hover overlay through
-OpenTUI. OpenTUI chooses Kitty, Sixel, or a terminal-block fallback according
-to terminal capabilities. GIF animation is not guaranteed.
-
-OpenCode can also display image attachments independently of this plugin:
-
-```json
-{
-  "prompt": { "image_preview": true },
-  "session": { "image_preview": true }
-}
-```
-
-Attachment placeholders such as `[Image N]` and pasted-content placeholders
-remain outside this plugin's scope. OpenCode does not expose a reliable
-inline-hover mapping from those placeholders to their original content, and
-pasted composer content is unavailable to the plugin.
+DNS validation reduces accidental access to local services but is not a
+complete defense against DNS rebinding. Localhost and private-network URLs are
+not supported.
 
 ## Development
 
-Run all project checks:
+This project uses Bun 1.4.4. Install dependencies and run all checks:
 
 ```sh
+make install
 make check
 ```
 
-Run the build validation or tests individually:
+Run type validation or tests separately:
 
 ```sh
 make build
 make test
 ```
 
-`make build` checks the TypeScript types without emitting artifacts.
+`make build` checks TypeScript types without emitting artifacts. Pull requests
+to `develop` and `main` run the same checks in CI.
 
-See [`docs/architecture.md`](docs/architecture.md) for the internal boundaries
-and [`docs/experiments.md`](docs/experiments.md) for host feasibility findings.
+## License
+
+OpenCode Hover Preview is available under the [MIT License](LICENSE).
