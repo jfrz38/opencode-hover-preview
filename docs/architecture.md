@@ -25,8 +25,10 @@ boundaries are testable without a terminal.
    intersects its displayed range. Link metadata and projected Markdown share
    one classifier for public HTTP(S) and workspace-file destinations.
 3. The hover delay starts one cancelable preview load.
-4. The loader returns a bounded `PreviewContent` value.
-5. The UI renders plain text and caches only successful results in memory.
+4. The loader returns a bounded `PreviewContent` value. Images are accepted
+   only for supported signatures, with remote MIME agreement.
+5. The UI renders text or a bounded OpenTUI image and caches only successful
+   results in memory. Image bytes share a 32 MiB LRU budget.
 6. Leaving the target, scrolling, changing targets, or unloading aborts the
    active operation and invalidates late results.
 
