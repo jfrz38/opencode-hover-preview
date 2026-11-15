@@ -1,5 +1,5 @@
 import { Lexer, type Token } from "marked"
-import type { PreviewTarget } from "../domain/preview-target.js"
+import { linkPreviewTarget, type PreviewTarget } from "../domain/preview-target.js"
 
 export interface MarkdownProjection {
   readonly text: string
@@ -28,13 +28,8 @@ function appendTokens(tokens: readonly Token[], output: MutableProjection): void
         appendTokens(token.tokens, output)
         const end = output.text.length
         if (end > start) {
-          output.targets.push({
-            kind: "url",
-            value: token.href,
-            source: "markdown-projection",
-            start,
-            end,
-          })
+          const target = linkPreviewTarget(token.href, "markdown-projection", start, end)
+          if (target !== undefined) output.targets.push(target)
         }
         break
       }

@@ -35,7 +35,6 @@ function contentLines(content: PreviewContent): string[] {
       if (content.truncated) body.push("… truncated")
       return [content.title, content.path, ...body]
     }
-    case "placeholder":
     case "unavailable":
       return [content.title, content.description]
   }
@@ -171,7 +170,7 @@ export function PreviewOverlay(props: {
             flexDirection="column"
             overflow="hidden"
           >
-            <text fg="#ffffff">Link preview</text>
+            <text fg="#ffffff">Preview</text>
             <text fg="#79d279">
               {state().target.kind} · {state().target.source}
             </text>

@@ -1,5 +1,5 @@
 import type { LineInfo, Renderable, TextChunk } from "@opentui/core"
-import { findPreviewTargets, type PreviewTarget } from "../domain/preview-target.js"
+import { findPreviewTargets, linkPreviewTarget, type PreviewTarget } from "../domain/preview-target.js"
 import { compareMarkdownLayout } from "./markdown-layout.js"
 import { projectMarkdownInline } from "./markdown-projection.js"
 import { findTargetAtTextCell } from "./text-hit-test.js"
@@ -48,7 +48,8 @@ function targetsFromChunks(chunks: readonly TextChunk[] | undefined): PreviewTar
     const start = offset
     offset += chunk.text.length
     if (chunk.link !== undefined) {
-      targets.push({ kind: "url", value: chunk.link.url, source: "link-metadata", start, end: offset })
+      const target = linkPreviewTarget(chunk.link.url, "link-metadata", start, offset)
+      if (target !== undefined) targets.push(target)
     }
   }
   return targets

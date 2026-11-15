@@ -98,25 +98,26 @@ test("projects flattened Markdown when visual width matches the rendered label",
   }
 })
 
-test("resolves pasted and image placeholders only on their exact cells", async () => {
+test("resolves local link metadata but ignores placeholders", async () => {
   const setup = await createTestRenderer({ width: 40, height: 3 })
 
   try {
     const text = new TextRenderable(setup.renderer, {
-      content: "[Pasted ~3 lines] [Image 1]",
+      content: new StyledText([
+        { __isChunk: true, text: "guide", link: { url: "./docs/guide.md" } },
+        { __isChunk: true, text: " [Pasted ~3 lines] [Image 1]" },
+      ]),
       width: 40,
     })
     setup.renderer.root.add(text)
     await setup.renderOnce()
 
     expect(inspectRenderable(text, { x: 2, y: 0 }).target).toMatchObject({
-      kind: "pasted-placeholder",
+      kind: "file-link",
+      value: "./docs/guide.md",
+      source: "link-metadata",
     })
-    expect(inspectRenderable(text, { x: 17, y: 0 }).target).toBeUndefined()
-    expect(inspectRenderable(text, { x: 20, y: 0 }).target).toMatchObject({
-      kind: "image-placeholder",
-      value: "[Image 1]",
-    })
+    expect(inspectRenderable(text, { x: 8, y: 0 }).target).toBeUndefined()
     expect(inspectRenderable(text, { x: 27, y: 0 }).target).toBeUndefined()
   } finally {
     setup.renderer.destroy()

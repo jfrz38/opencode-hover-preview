@@ -18,7 +18,15 @@ function isInside(root: string, candidate: string): boolean {
 
 function targetPath(target: PreviewTarget): string | undefined {
   if (target.kind === "file-mention") return target.value.slice(1)
-  if (target.kind === "path") return target.value
+  if (target.kind === "file-link") {
+    const suffix = target.value.search(/[?#]/u)
+    const path = suffix === -1 ? target.value : target.value.slice(0, suffix)
+    try {
+      return decodeURIComponent(path)
+    } catch {
+      return undefined
+    }
+  }
   return undefined
 }
 

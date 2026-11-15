@@ -17,7 +17,13 @@ describe("diagnostic target display", () => {
   test("truncates long destinations to the requested width", () => {
     expect(
       formatPreviewTarget(
-        { kind: "path", value: "./very/long/path/to/README.md", source: "text", start: 0, end: 0 },
+        {
+          kind: "file-link",
+          value: "./very/long/path/to/README.md",
+          source: "markdown-projection",
+          start: 0,
+          end: 0,
+        },
         12,
       ),
     ).toBe("./very/long…")
