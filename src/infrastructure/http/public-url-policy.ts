@@ -1,5 +1,5 @@
 import { isIP } from "node:net"
-import type { PreviewFailure } from "../../core/preview-content.js"
+import type { PreviewFailure } from "../../core/preview-failure.js"
 import { isPublicIpAddress } from "./ip-address-policy.js"
 
 export type HostResolver = (hostname: string) => Promise<readonly string[]>

@@ -1,10 +1,18 @@
 import { describe, expect, test } from "bun:test"
+import { PREVIEW_IMAGE_MIMES } from "../../../src/core/preview-content.js"
 import {
   detectImageMime,
   parseImageContentType,
 } from "../../../src/infrastructure/media/image-format.js"
 
 describe("image format validation", () => {
+  test("uses the core MIME catalog as the source of truth", () => {
+    expect(PREVIEW_IMAGE_MIMES).toEqual(["image/png", "image/jpeg", "image/gif", "image/webp"])
+    for (const mime of PREVIEW_IMAGE_MIMES) {
+      expect(parseImageContentType(mime)).toBe(mime)
+    }
+  })
+
   test.each([
     [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], "image/png"],
     [[0xff, 0xd8, 0xff], "image/jpeg"],
