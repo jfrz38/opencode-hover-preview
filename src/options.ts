@@ -1,13 +1,11 @@
+import type { PreviewSources } from "./preview/load-preview.js"
+import type { PreviewDisplayOptions } from "./ui/preview-overlay-layout.js"
+
 export interface PluginOptions {
   readonly enabled: boolean
   readonly hoverDelayMs: number
-  readonly urlPreview: boolean
-  readonly filePreview: boolean
-  readonly imagePreview: boolean
-  readonly showDetails: boolean
-  readonly previewWidth: number
-  readonly previewMinHeight: number
-  readonly previewMaxHeight: number
+  readonly sources: PreviewSources
+  readonly display: PreviewDisplayOptions
 }
 
 const DEFAULT_HOVER_DELAY_MS = 500
@@ -23,15 +21,23 @@ function positiveInteger(value: unknown, fallback: number, minimum: number): num
   return Math.max(minimum, Math.min(Math.floor(value), Number.MAX_SAFE_INTEGER))
 }
 
+function record(value: unknown): Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Readonly<Record<string, unknown>>)
+    : {}
+}
+
 export function parseOptions(input: Readonly<Record<string, unknown>>): PluginOptions {
   const requestedDelay = typeof input.hoverDelayMs === "number" ? input.hoverDelayMs : DEFAULT_HOVER_DELAY_MS
-  const previewMinHeight = positiveInteger(
-    input.previewMinHeight,
+  const sources = record(input.sources)
+  const display = record(input.display)
+  const minHeight = positiveInteger(
+    display.minHeight,
     DEFAULT_PREVIEW_MIN_HEIGHT,
     MIN_PREVIEW_HEIGHT,
   )
-  const requestedPreviewMaxHeight = positiveInteger(
-    input.previewMaxHeight,
+  const requestedMaxHeight = positiveInteger(
+    display.maxHeight,
     DEFAULT_PREVIEW_MAX_HEIGHT,
     MIN_PREVIEW_HEIGHT,
   )
@@ -39,12 +45,16 @@ export function parseOptions(input: Readonly<Record<string, unknown>>): PluginOp
   return {
     enabled: input.enabled !== false && input.diagnostic !== false,
     hoverDelayMs: Math.max(0, Math.min(requestedDelay, MAX_HOVER_DELAY_MS)),
-    urlPreview: input.urlPreview !== false,
-    filePreview: input.filePreview !== false,
-    imagePreview: input.imagePreview !== false,
-    showDetails: input.showDetails === true,
-    previewWidth: positiveInteger(input.previewWidth, DEFAULT_PREVIEW_WIDTH, MIN_PREVIEW_WIDTH),
-    previewMinHeight,
-    previewMaxHeight: Math.max(previewMinHeight, requestedPreviewMaxHeight),
+    sources: {
+      url: sources.url !== false,
+      file: sources.file !== false,
+      image: sources.image !== false,
+    },
+    display: {
+      showDetails: display.showDetails === true,
+      width: positiveInteger(display.width, DEFAULT_PREVIEW_WIDTH, MIN_PREVIEW_WIDTH),
+      minHeight,
+      maxHeight: Math.max(minHeight, requestedMaxHeight),
+    },
   }
 }

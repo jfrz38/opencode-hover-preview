@@ -14,11 +14,8 @@ export default Plugin.define({
         <PreviewOverlay
           delayMs={options.hoverDelayMs}
           workspace={context.location?.directory}
-          previewOptions={options}
-          showDetails={options.showDetails}
-          previewWidth={options.previewWidth}
-          previewMinHeight={options.previewMinHeight}
-          previewMaxHeight={options.previewMaxHeight}
+          sources={options.sources}
+          display={options.display}
         />
       ),
     })

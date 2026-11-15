@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test"
 import type { PreviewContent } from "../../src/domain/preview-content.js"
-import { calculatePreviewOverlayLayout } from "../../src/ui/preview-overlay-layout.js"
+import {
+  calculatePreviewOverlayLayout,
+  type PreviewDisplayOptions,
+} from "../../src/ui/preview-overlay-layout.js"
 
 const file = (truncated = false): PreviewContent => ({
   kind: "file",
@@ -20,17 +23,23 @@ const image: PreviewContent = {
 
 function layout(
   content: PreviewContent,
-  overrides: Partial<Parameters<typeof calculatePreviewOverlayLayout>[0]> = {},
+  overrides: Partial<Omit<Parameters<typeof calculatePreviewOverlayLayout>[0], "content" | "display">> & {
+    display?: Partial<PreviewDisplayOptions>
+  } = {},
 ) {
+  const display: PreviewDisplayOptions = {
+    showDetails: false,
+    width: 70,
+    minHeight: 4,
+    maxHeight: 16,
+    ...overrides.display,
+  }
   return calculatePreviewOverlayLayout({
     content,
     lineCount: 0,
-    showDetails: false,
     viewport: { width: 120, height: 40 },
-    previewWidth: 70,
-    previewMinHeight: 4,
-    previewMaxHeight: 16,
     ...overrides,
+    display,
   })
 }
 
@@ -58,16 +67,19 @@ describe("preview overlay layout", () => {
       description: "Could not load.",
     }
 
-    expect(layout(unavailable, { lineCount: 2, previewMinHeight: 8 })).toMatchObject({ height: 8 })
-    expect(layout(unavailable, { lineCount: 20, previewMaxHeight: 9 })).toMatchObject({ height: 9 })
+    expect(layout(unavailable, { lineCount: 2, display: { minHeight: 8 } })).toMatchObject({
+      height: 8,
+    })
+    expect(layout(unavailable, { lineCount: 20, display: { maxHeight: 9 } })).toMatchObject({
+      height: 9,
+    })
   })
 
   test("keeps detailed media previews at their natural height", () => {
     expect(
       layout(image, {
         lineCount: 2,
-        showDetails: true,
-        previewMaxHeight: 30,
+        display: { showDetails: true, maxHeight: 30 },
       }),
     ).toMatchObject({ height: 16, imageHeight: 10 })
   })
@@ -76,8 +88,7 @@ describe("preview overlay layout", () => {
     expect(
       layout(file(), {
         viewport: { width: 45, height: 6 },
-        previewWidth: 90,
-        previewMaxHeight: 8,
+        display: { width: 90, maxHeight: 8 },
       }),
     ).toEqual({
       width: 45,
@@ -88,7 +99,7 @@ describe("preview overlay layout", () => {
     expect(
       layout(image, {
         viewport: { width: 120, height: 3 },
-        previewMaxHeight: 3,
+        display: { maxHeight: 3 },
       }),
     ).toMatchObject({ height: 3, imageHeight: 1 })
   })

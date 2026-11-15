@@ -40,13 +40,17 @@ Reference the package from the OpenCode TUI configuration:
       "options": {
         "enabled": true,
         "hoverDelayMs": 500,
-        "urlPreview": true,
-        "filePreview": true,
-        "imagePreview": true,
-        "showDetails": false,
-        "previewWidth": 70,
-        "previewMinHeight": 4,
-        "previewMaxHeight": 16
+        "sources": {
+          "url": true,
+          "file": true,
+          "image": true
+        },
+        "display": {
+          "showDetails": false,
+          "width": 70,
+          "minHeight": 4,
+          "maxHeight": 16
+        }
       }
     }
   ]
@@ -60,28 +64,29 @@ Run `/reload` after changing the plugin or its configuration.
 - `enabled`: enables the plugin; defaults to `true`.
 - `hoverDelayMs`: delay before loading a preview; defaults to `500` and is
   clamped between `0` and `10000`.
-- `urlPreview`: shows previews for HTTP(S) pages; defaults to `true`. Turning it
-  off does not hide remote images when `imagePreview` is enabled.
-- `filePreview`: shows previews for workspace text files; defaults to `true`.
-  Turning it off does not hide local images when `imagePreview` is enabled.
-- `imagePreview`: shows supported local and remote images; defaults to `true`.
+- `sources.url`: shows previews for HTTP(S) pages; defaults to `true`. Turning
+  it off does not hide remote images when `sources.image` is enabled.
+- `sources.file`: shows previews for workspace text files; defaults to `true`.
+  Turning it off does not hide local images when `sources.image` is enabled.
+- `sources.image`: shows supported local and remote images; defaults to `true`.
   Turning it off does not affect HTTP(S) pages or text files.
-- `showDetails`: adds target diagnostics and metadata such as file paths, image
-  locations, URL hosts, and sanitized URLs; defaults to `false`.
-- `previewWidth`: desired preview width in terminal columns; defaults to `70`.
+- `display.showDetails`: adds target diagnostics and metadata such as file
+  paths, image locations, URL hosts, and sanitized URLs; defaults to `false`.
+- `display.width`: desired preview width in terminal columns; defaults to `70`.
   It is reduced automatically when the terminal is narrower.
-- `previewMinHeight`: minimum preview height in terminal rows; defaults to `4`.
-- `previewMaxHeight`: maximum preview height in terminal rows; defaults to `16`.
+- `display.minHeight`: minimum preview height in terminal rows; defaults to `4`.
+- `display.maxHeight`: maximum preview height in terminal rows; defaults to
+  `16`.
   The preview remains content-sized within this range and is reduced
   automatically when the terminal is shorter.
 
 Preview dimensions accept positive integers. Values below the renderable
 minimum are raised, fractional values are rounded down, and
-`previewMaxHeight` is raised when necessary to match `previewMinHeight`.
+`display.maxHeight` is raised when necessary to match `display.minHeight`.
 
 Previews use a compact presentation by default: files show their formatted
 content, images show the image, and URLs show the fetched title and description.
-Set `showDetails` to `true` to restore the complete metadata display.
+Set `display.showDetails` to `true` to restore the complete metadata display.
 
 `diagnostic: false` remains accepted as a legacy alias for `enabled: false`.
 
@@ -115,9 +120,9 @@ URL previews:
 DNS validation reduces accidental access to local services but is not a complete
 defense against DNS rebinding because the local runtime resolves the hostname
 again for the request. Localhost and private-network HTTP(S) URLs are not
-supported. Set both `urlPreview` and `imagePreview` to `false` when network
-access must be prohibited. Set both `filePreview` and `imagePreview` to `false`
-when workspace file reads must be prohibited.
+supported. Set both `sources.url` and `sources.image` to `false` when network
+access must be prohibited. Set both `sources.file` and `sources.image` to
+`false` when workspace file reads must be prohibited.
 
 ## Formatted file previews
 

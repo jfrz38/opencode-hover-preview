@@ -8,11 +8,14 @@ import { positionOverlay, type Point } from "../domain/overlay-position.js"
 import type { PreviewTarget } from "../domain/preview-target.js"
 import { inspectRenderable } from "../opentui/renderable-inspector.js"
 import { observeRootMouse } from "../opentui/root-mouse-observer.js"
-import { canLoadPreview, loadPreview, type PreviewOptions } from "../preview/load-preview.js"
+import { canLoadPreview, loadPreview, type PreviewSources } from "../preview/load-preview.js"
 import { PreviewCache } from "../preview/preview-cache.js"
 import { previewTextLines } from "./preview-content-display.js"
 import { resolveFilePreviewFormat } from "./file-preview-format.js"
-import { calculatePreviewOverlayLayout } from "./preview-overlay-layout.js"
+import {
+  calculatePreviewOverlayLayout,
+  type PreviewDisplayOptions,
+} from "./preview-overlay-layout.js"
 
 const OVERLAY_ID = "opencode-hover-preview.overlay"
 
@@ -85,11 +88,8 @@ function FilePreviewBody(props: {
 export function PreviewOverlay(props: {
   readonly delayMs: number
   readonly workspace?: string
-  readonly previewOptions: PreviewOptions
-  readonly showDetails: boolean
-  readonly previewWidth: number
-  readonly previewMinHeight: number
-  readonly previewMaxHeight: number
+  readonly sources: PreviewSources
+  readonly display: PreviewDisplayOptions
 }) {
   const context = usePlugin()
   const syntaxStyle = generateSyntax(context.theme, context.renderer.nativeScene)
@@ -135,7 +135,7 @@ export function PreviewOverlay(props: {
     void loadPreview(
       candidate.target,
       props.workspace,
-      props.previewOptions,
+      props.sources,
       controller.signal,
     )
       .then((content) => {
@@ -150,9 +150,7 @@ export function PreviewOverlay(props: {
       .catch(() => {
         if (controller.signal.aborted || currentGeneration !== generation) return
         const originEnabled =
-          candidate.target.kind === "url"
-            ? props.previewOptions.urlPreview
-            : props.previewOptions.filePreview
+          candidate.target.kind === "url" ? props.sources.url : props.sources.file
         if (!originEnabled) {
           setVisible(undefined)
           return
@@ -192,7 +190,7 @@ export function PreviewOverlay(props: {
     if (event.type !== "over" && event.type !== "move") return
 
     const target = inspectRenderable(renderable, { x: event.x, y: event.y }).target
-    if (target === undefined || !canLoadPreview(target, props.previewOptions)) {
+    if (target === undefined || !canLoadPreview(target, props.sources)) {
       delay.leave()
       return
     }
@@ -213,7 +211,7 @@ export function PreviewOverlay(props: {
     <Show when={visible()}>
       {(state) => {
         const lines = () => {
-          return previewTextLines(state().content, props.showDetails)
+          return previewTextLines(state().content, props.display.showDetails)
         }
         const image = () => {
           const content = state().content
@@ -227,11 +225,8 @@ export function PreviewOverlay(props: {
           calculatePreviewOverlayLayout({
             content: state().content,
             lineCount: lines().length,
-            showDetails: props.showDetails,
             viewport: { width: context.renderer.width, height: context.renderer.height },
-            previewWidth: props.previewWidth,
-            previewMinHeight: props.previewMinHeight,
-            previewMaxHeight: props.previewMaxHeight,
+            display: props.display,
           })
         const position = () =>
           positionOverlay(
@@ -257,7 +252,7 @@ export function PreviewOverlay(props: {
             flexDirection="column"
             overflow="hidden"
           >
-            <Show when={props.showDetails}>
+            <Show when={props.display.showDetails}>
               <text fg="#ffffff">Preview</text>
               <text fg="#79d279">
                 {state().target.kind} · {state().target.source}
@@ -268,7 +263,7 @@ export function PreviewOverlay(props: {
                 <FilePreviewBody
                   content={content()}
                   syntaxStyle={syntaxStyle}
-                  showDetails={props.showDetails}
+                  showDetails={props.display.showDetails}
                   bodyHeight={layout().fileBodyHeight}
                 />
               )}
@@ -276,7 +271,7 @@ export function PreviewOverlay(props: {
             <Show when={image()}>
               {(content) => (
                 <>
-                  <For each={previewTextLines(content(), props.showDetails)}>
+                  <For each={previewTextLines(content(), props.display.showDetails)}>
                     {(line, index) => (
                       <text fg={index() === 0 ? "#ffffff" : "#aaaaaa"}>{line}</text>
                     )}

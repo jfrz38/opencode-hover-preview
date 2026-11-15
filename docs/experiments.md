@@ -40,8 +40,17 @@ After `bun install`, add this repository as a TUI-only plugin in the global
       "options": {
         "enabled": true,
         "hoverDelayMs": 500,
-        "urlPreview": true,
-        "filePreview": true
+        "sources": {
+          "url": true,
+          "file": true,
+          "image": true
+        },
+        "display": {
+          "showDetails": false,
+          "width": 70,
+          "minHeight": 4,
+          "maxHeight": 16
+        }
       }
     }
   ]

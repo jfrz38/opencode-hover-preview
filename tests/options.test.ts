@@ -6,13 +6,17 @@ describe("plugin options", () => {
     expect(parseOptions({})).toEqual({
       enabled: true,
       hoverDelayMs: 500,
-      urlPreview: true,
-      filePreview: true,
-      imagePreview: true,
-      showDetails: false,
-      previewWidth: 70,
-      previewMinHeight: 4,
-      previewMaxHeight: 16,
+      sources: {
+        url: true,
+        file: true,
+        image: true,
+      },
+      display: {
+        showDetails: false,
+        width: 70,
+        minHeight: 4,
+        maxHeight: 16,
+      },
     })
   })
 
@@ -24,47 +28,76 @@ describe("plugin options", () => {
   test("supports feature switches and the legacy diagnostic alias", () => {
     expect(parseOptions({ enabled: false }).enabled).toBe(false)
     expect(parseOptions({ diagnostic: false }).enabled).toBe(false)
-    expect(parseOptions({ urlPreview: false, filePreview: false, imagePreview: false })).toMatchObject({
-      urlPreview: false,
-      filePreview: false,
-      imagePreview: false,
+    expect(parseOptions({ sources: { url: false, file: false, image: false } }).sources).toEqual({
+      url: false,
+      file: false,
+      image: false,
     })
   })
 
   test("shows preview details only when explicitly enabled", () => {
-    expect(parseOptions({}).showDetails).toBe(false)
-    expect(parseOptions({ showDetails: true }).showDetails).toBe(true)
-    expect(parseOptions({ showDetails: "true" }).showDetails).toBe(false)
+    expect(parseOptions({}).display.showDetails).toBe(false)
+    expect(parseOptions({ display: { showDetails: true } }).display.showDetails).toBe(true)
+    expect(parseOptions({ display: { showDetails: "true" } }).display.showDetails).toBe(false)
   })
 
   test("supports custom preview dimensions", () => {
     expect(
-      parseOptions({ previewWidth: 90.8, previewMinHeight: 6.9, previewMaxHeight: 24.2 }),
-    ).toMatchObject({
-      previewWidth: 90,
-      previewMinHeight: 6,
-      previewMaxHeight: 24,
+      parseOptions({ display: { width: 90.8, minHeight: 6.9, maxHeight: 24.2 } }).display,
+    ).toEqual({
+      showDetails: false,
+      width: 90,
+      minHeight: 6,
+      maxHeight: 24,
     })
   })
 
   test("normalizes invalid and contradictory preview dimensions", () => {
     expect(
       parseOptions({
-        previewWidth: Number.POSITIVE_INFINITY,
-        previewMinHeight: -2,
-        previewMaxHeight: "12",
-      }),
-    ).toMatchObject({
-      previewWidth: 70,
-      previewMinHeight: 4,
-      previewMaxHeight: 16,
+        display: {
+          width: Number.POSITIVE_INFINITY,
+          minHeight: -2,
+          maxHeight: "12",
+        },
+      }).display,
+    ).toEqual({
+      showDetails: false,
+      width: 70,
+      minHeight: 4,
+      maxHeight: 16,
     })
     expect(
-      parseOptions({ previewWidth: 2, previewMinHeight: 20, previewMaxHeight: 10 }),
+      parseOptions({ display: { width: 2, minHeight: 20, maxHeight: 10 } }).display,
+    ).toEqual({
+      showDetails: false,
+      width: 4,
+      minHeight: 20,
+      maxHeight: 20,
+    })
+  })
+
+  test("uses defaults for invalid option groups", () => {
+    expect(parseOptions({ sources: null, display: "compact" })).toMatchObject({
+      sources: { url: true, file: true, image: true },
+      display: { showDetails: false, width: 70, minHeight: 4, maxHeight: 16 },
+    })
+  })
+
+  test("does not interpret legacy flat preview options", () => {
+    expect(
+      parseOptions({
+        urlPreview: false,
+        filePreview: false,
+        imagePreview: false,
+        showDetails: true,
+        previewWidth: 90,
+        previewMinHeight: 8,
+        previewMaxHeight: 24,
+      }),
     ).toMatchObject({
-      previewWidth: 4,
-      previewMinHeight: 20,
-      previewMaxHeight: 20,
+      sources: { url: true, file: true, image: true },
+      display: { showDetails: false, width: 70, minHeight: 4, maxHeight: 16 },
     })
   })
 })

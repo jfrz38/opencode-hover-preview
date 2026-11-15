@@ -3,47 +3,47 @@ import type { PreviewTarget } from "../domain/preview-target.js"
 import { loadFilePreview } from "./file-preview.js"
 import { loadUrlPreview } from "./url-preview.js"
 
-export interface PreviewOptions {
-  readonly urlPreview: boolean
-  readonly filePreview: boolean
-  readonly imagePreview: boolean
+export interface PreviewSources {
+  readonly url: boolean
+  readonly file: boolean
+  readonly image: boolean
 }
 
-export function canLoadPreview(target: PreviewTarget, options: PreviewOptions): boolean {
+export function canLoadPreview(target: PreviewTarget, sources: PreviewSources): boolean {
   return target.kind === "url"
-    ? options.urlPreview || options.imagePreview
-    : options.filePreview || options.imagePreview
+    ? sources.url || sources.image
+    : sources.file || sources.image
 }
 
 export function isPreviewEnabled(
   target: PreviewTarget,
   content: PreviewContent,
-  options: PreviewOptions,
+  sources: PreviewSources,
 ): boolean {
   switch (content.kind) {
     case "url":
-      return options.urlPreview
+      return sources.url
     case "file":
-      return options.filePreview
+      return sources.file
     case "image":
-      return options.imagePreview
+      return sources.image
     case "unavailable":
-      return target.kind === "url" ? options.urlPreview : options.filePreview
+      return target.kind === "url" ? sources.url : sources.file
   }
 }
 
 export async function loadPreview(
   target: PreviewTarget,
   workspace: string | undefined,
-  options: PreviewOptions,
+  sources: PreviewSources,
   signal: AbortSignal,
 ): Promise<PreviewContent | undefined> {
-  if (!canLoadPreview(target, options)) return undefined
+  if (!canLoadPreview(target, sources)) return undefined
 
   let content: PreviewContent | undefined
   switch (target.kind) {
     case "url":
-      content = await loadUrlPreview(target, signal, undefined, options.imagePreview)
+      content = await loadUrlPreview(target, signal, undefined, sources.image)
       break
     case "file-mention":
     case "file-link":
@@ -55,10 +55,10 @@ export async function loadPreview(
         }
         break
       }
-      content = await loadFilePreview(target, workspace, signal, options.imagePreview)
+      content = await loadFilePreview(target, workspace, signal, sources.image)
       break
   }
 
   if (content === undefined) return undefined
-  return isPreviewEnabled(target, content, options) ? content : undefined
+  return isPreviewEnabled(target, content, sources) ? content : undefined
 }
