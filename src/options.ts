@@ -11,8 +11,7 @@ export interface PluginOptions {
 const DEFAULT_HOVER_DELAY_MS = 500
 const MAX_HOVER_DELAY_MS = 10_000
 const DEFAULT_PREVIEW_WIDTH = 70
-const DEFAULT_PREVIEW_MIN_HEIGHT = 4
-const DEFAULT_PREVIEW_MAX_HEIGHT = 16
+const DEFAULT_PREVIEW_HEIGHT = 16
 const MIN_PREVIEW_WIDTH = 4
 const MIN_PREVIEW_HEIGHT = 2
 
@@ -31,17 +30,6 @@ export function parseOptions(input: Readonly<Record<string, unknown>>): PluginOp
   const requestedDelay = typeof input.hoverDelayMs === "number" ? input.hoverDelayMs : DEFAULT_HOVER_DELAY_MS
   const sources = record(input.sources)
   const display = record(input.display)
-  const minHeight = positiveInteger(
-    display.minHeight,
-    DEFAULT_PREVIEW_MIN_HEIGHT,
-    MIN_PREVIEW_HEIGHT,
-  )
-  const requestedMaxHeight = positiveInteger(
-    display.maxHeight,
-    DEFAULT_PREVIEW_MAX_HEIGHT,
-    MIN_PREVIEW_HEIGHT,
-  )
-
   return {
     enabled: input.enabled !== false && input.diagnostic !== false,
     hoverDelayMs: Math.max(0, Math.min(requestedDelay, MAX_HOVER_DELAY_MS)),
@@ -53,8 +41,7 @@ export function parseOptions(input: Readonly<Record<string, unknown>>): PluginOp
     display: {
       showDetails: display.showDetails === true,
       width: positiveInteger(display.width, DEFAULT_PREVIEW_WIDTH, MIN_PREVIEW_WIDTH),
-      minHeight,
-      maxHeight: Math.max(minHeight, requestedMaxHeight),
+      height: positiveInteger(display.height, DEFAULT_PREVIEW_HEIGHT, MIN_PREVIEW_HEIGHT),
     },
   }
 }

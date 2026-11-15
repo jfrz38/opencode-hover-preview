@@ -30,8 +30,7 @@ function layout(
   const display: PreviewDisplayOptions = {
     showDetails: false,
     width: 70,
-    minHeight: 4,
-    maxHeight: 16,
+    height: 16,
     ...overrides.display,
   }
   return calculatePreviewOverlayLayout({
@@ -44,51 +43,53 @@ function layout(
 }
 
 describe("preview overlay layout", () => {
-  test("preserves the default file and image dimensions", () => {
+  test("uses the same fixed window height for file, image, and text previews", () => {
     expect(layout(file())).toEqual({
       width: 70,
-      height: 10,
-      fileBodyHeight: 8,
+      height: 16,
+      fileBodyHeight: 14,
       imageHeight: 0,
     })
-    expect(layout(file(true))).toMatchObject({ height: 11, fileBodyHeight: 8 })
+    expect(layout(file(true))).toMatchObject({ height: 16, fileBodyHeight: 13 })
     expect(layout(image)).toEqual({
       width: 70,
-      height: 12,
+      height: 16,
       fileBodyHeight: 0,
-      imageHeight: 10,
+      imageHeight: 14,
     })
-  })
-
-  test("sizes text previews within the configured height range", () => {
-    const unavailable: PreviewContent = {
+    const text: PreviewContent = {
       kind: "unavailable",
-      title: "Preview unavailable",
+      title: "Unavailable",
       description: "Could not load.",
     }
-
-    expect(layout(unavailable, { lineCount: 2, display: { minHeight: 8 } })).toMatchObject({
-      height: 8,
-    })
-    expect(layout(unavailable, { lineCount: 20, display: { maxHeight: 9 } })).toMatchObject({
-      height: 9,
+    expect(layout(text)).toEqual({
+      width: 70,
+      height: 16,
+      fileBodyHeight: 0,
+      imageHeight: 0,
     })
   })
 
-  test("keeps detailed media previews at their natural height", () => {
+  test("subtracts headers, metadata, and truncation indicators from media space", () => {
     expect(
       layout(image, {
         lineCount: 2,
-        display: { showDetails: true, maxHeight: 30 },
+        display: { showDetails: true, height: 30 },
       }),
-    ).toMatchObject({ height: 16, imageHeight: 10 })
+    ).toMatchObject({ height: 30, imageHeight: 24 })
+    expect(
+      layout(file(true), {
+        lineCount: 2,
+        display: { showDetails: true, height: 30 },
+      }),
+    ).toMatchObject({ height: 30, fileBodyHeight: 23 })
   })
 
-  test("shrinks the overlay and media body to the viewport and configured maximum", () => {
+  test("shrinks the fixed window to the viewport and sizes content to its interior", () => {
     expect(
       layout(file(), {
         viewport: { width: 45, height: 6 },
-        display: { width: 90, maxHeight: 8 },
+        display: { width: 90, height: 40 },
       }),
     ).toEqual({
       width: 45,
@@ -99,7 +100,7 @@ describe("preview overlay layout", () => {
     expect(
       layout(image, {
         viewport: { width: 120, height: 3 },
-        display: { maxHeight: 3 },
+        display: { height: 3 },
       }),
     ).toMatchObject({ height: 3, imageHeight: 1 })
   })

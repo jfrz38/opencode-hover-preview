@@ -48,8 +48,7 @@ Reference the package from the OpenCode TUI configuration:
         "display": {
           "showDetails": false,
           "width": 70,
-          "minHeight": 4,
-          "maxHeight": 16
+          "height": 16
         }
       }
     }
@@ -72,17 +71,14 @@ Run `/reload` after changing the plugin or its configuration.
   Turning it off does not affect HTTP(S) pages or text files.
 - `display.showDetails`: adds target diagnostics and metadata such as file
   paths, image locations, URL hosts, and sanitized URLs; defaults to `false`.
-- `display.width`: desired preview width in terminal columns; defaults to `70`.
-  It is reduced automatically when the terminal is narrower.
-- `display.minHeight`: minimum preview height in terminal rows; defaults to `4`.
-- `display.maxHeight`: maximum preview height in terminal rows; defaults to
-  `16`.
-  The preview remains content-sized within this range and is reduced
-  automatically when the terminal is shorter.
+- `display.width`: preview window width in terminal columns; defaults to `70`.
+- `display.height`: preview window height in terminal rows; defaults to `16`.
+  It applies equally to images, files, and text previews. Images scale to fit
+  the available interior, while text and file content are clipped when needed.
+  Both dimensions are reduced automatically when the terminal is smaller.
 
-Preview dimensions accept positive integers. Values below the renderable
-minimum are raised, fractional values are rounded down, and
-`display.maxHeight` is raised when necessary to match `display.minHeight`.
+Preview dimensions accept positive integers. Fractional values are rounded down
+and values below the renderable minimum are raised.
 
 Previews use a compact presentation by default: files show their formatted
 content, images show the image, and URLs show the fetched title and description.

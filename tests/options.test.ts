@@ -14,8 +14,7 @@ describe("plugin options", () => {
       display: {
         showDetails: false,
         width: 70,
-        minHeight: 4,
-        maxHeight: 16,
+        height: 16,
       },
     })
   })
@@ -43,44 +42,37 @@ describe("plugin options", () => {
 
   test("supports custom preview dimensions", () => {
     expect(
-      parseOptions({ display: { width: 90.8, minHeight: 6.9, maxHeight: 24.2 } }).display,
+      parseOptions({ display: { width: 90.8, height: 24.2 } }).display,
     ).toEqual({
       showDetails: false,
       width: 90,
-      minHeight: 6,
-      maxHeight: 24,
+      height: 24,
     })
   })
 
-  test("normalizes invalid and contradictory preview dimensions", () => {
+  test("normalizes invalid preview dimensions", () => {
     expect(
       parseOptions({
         display: {
           width: Number.POSITIVE_INFINITY,
-          minHeight: -2,
-          maxHeight: "12",
+          height: "12",
         },
       }).display,
     ).toEqual({
       showDetails: false,
       width: 70,
-      minHeight: 4,
-      maxHeight: 16,
+      height: 16,
     })
-    expect(
-      parseOptions({ display: { width: 2, minHeight: 20, maxHeight: 10 } }).display,
-    ).toEqual({
-      showDetails: false,
+    expect(parseOptions({ display: { width: 2, height: 1 } }).display).toMatchObject({
       width: 4,
-      minHeight: 20,
-      maxHeight: 20,
+      height: 2,
     })
   })
 
   test("uses defaults for invalid option groups", () => {
     expect(parseOptions({ sources: null, display: "compact" })).toMatchObject({
       sources: { url: true, file: true, image: true },
-      display: { showDetails: false, width: 70, minHeight: 4, maxHeight: 16 },
+      display: { showDetails: false, width: 70, height: 16 },
     })
   })
 
@@ -92,12 +84,15 @@ describe("plugin options", () => {
         imagePreview: false,
         showDetails: true,
         previewWidth: 90,
-        previewMinHeight: 8,
-        previewMaxHeight: 24,
+        previewHeight: 80,
       }),
     ).toMatchObject({
       sources: { url: true, file: true, image: true },
-      display: { showDetails: false, width: 70, minHeight: 4, maxHeight: 16 },
+      display: { showDetails: false, width: 70, height: 16 },
     })
+  })
+
+  test("does not interpret legacy minHeight and maxHeight settings", () => {
+    expect(parseOptions({ display: { minHeight: 40, maxHeight: 80 } }).display.height).toBe(16)
   })
 })
