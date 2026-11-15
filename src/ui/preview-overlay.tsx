@@ -10,6 +10,7 @@ import { inspectRenderable } from "../opentui/renderable-inspector.js"
 import { observeRootMouse } from "../opentui/root-mouse-observer.js"
 import { loadPreview, type PreviewOptions } from "../preview/load-preview.js"
 import { PreviewCache } from "../preview/preview-cache.js"
+import { previewTextLines } from "./preview-content-display.js"
 import { resolveFilePreviewFormat } from "./file-preview-format.js"
 
 const OVERLAY_WIDTH = 70
@@ -28,21 +29,6 @@ interface PreviewState extends HoverTarget {
   readonly content?: PreviewContent
 }
 
-function contentLines(content: PreviewContent): string[] {
-  switch (content.kind) {
-    case "image":
-      return [content.title, content.location]
-    case "url":
-      return [content.title, content.host, content.description, content.url].filter(
-        (line): line is string => line !== undefined && line !== "",
-      )
-    case "file":
-      return [content.title, content.path]
-    case "unavailable":
-      return [content.title, content.description]
-  }
-}
-
 function isInsideOverlay(renderable: Renderable): boolean {
   let current: Renderable | null = renderable
   while (current !== null) {
@@ -55,6 +41,7 @@ function isInsideOverlay(renderable: Renderable): boolean {
 function FilePreviewBody(props: {
   readonly content: Extract<PreviewContent, { readonly kind: "file" }>
   readonly syntaxStyle: SyntaxStyle
+  readonly showDetails: boolean
 }) {
   const body = () => {
     const format = resolveFilePreviewFormat(props.content.language)
@@ -85,8 +72,9 @@ function FilePreviewBody(props: {
 
   return (
     <>
-      <text fg="#ffffff">{props.content.title}</text>
-      <text fg="#aaaaaa">{props.content.path}</text>
+      <For each={previewTextLines(props.content, props.showDetails)}>
+        {(line, index) => <text fg={index() === 0 ? "#ffffff" : "#aaaaaa"}>{line}</text>}
+      </For>
       <box height={FILE_BODY_HEIGHT} overflow="hidden">
         {body()}
       </box>
@@ -101,6 +89,7 @@ export function PreviewOverlay(props: {
   readonly delayMs: number
   readonly workspace?: string
   readonly previewOptions: PreviewOptions
+  readonly showDetails: boolean
 }) {
   const context = usePlugin()
   const syntaxStyle = generateSyntax(context.theme, context.renderer.nativeScene)
@@ -215,7 +204,7 @@ export function PreviewOverlay(props: {
       {(state) => {
         const lines = () => {
           const content = state().content
-          return content === undefined ? ["Loading preview…"] : contentLines(content)
+          return content === undefined ? ["Loading preview…"] : previewTextLines(content, props.showDetails)
         }
         const image = () => {
           const content = state().content
@@ -225,10 +214,18 @@ export function PreviewOverlay(props: {
           const content = state().content
           return content?.kind === "file" ? content : undefined
         }
-        const overlayHeight = () =>
-          image() === undefined && file() === undefined
-            ? Math.min(MAX_OVERLAY_HEIGHT, Math.max(6, lines().length + 4))
-            : MAX_OVERLAY_HEIGHT
+        const overlayHeight = () => {
+          if (props.showDetails) {
+            return image() === undefined && file() === undefined
+              ? Math.min(MAX_OVERLAY_HEIGHT, Math.max(6, lines().length + 4))
+              : MAX_OVERLAY_HEIGHT
+          }
+          const imageContent = image()
+          if (imageContent !== undefined) return IMAGE_HEIGHT + 2
+          const fileContent = file()
+          if (fileContent !== undefined) return FILE_BODY_HEIGHT + (fileContent.truncated ? 3 : 2)
+          return Math.min(MAX_OVERLAY_HEIGHT, Math.max(4, lines().length + 2))
+        }
         const position = () =>
           positionOverlay(
             state().pointer,
@@ -253,18 +250,29 @@ export function PreviewOverlay(props: {
             flexDirection="column"
             overflow="hidden"
           >
-            <text fg="#ffffff">Preview</text>
-            <text fg="#79d279">
-              {state().target.kind} · {state().target.source}
-            </text>
+            <Show when={props.showDetails}>
+              <text fg="#ffffff">Preview</text>
+              <text fg="#79d279">
+                {state().target.kind} · {state().target.source}
+              </text>
+            </Show>
             <Show when={file()}>
-              {(content) => <FilePreviewBody content={content()} syntaxStyle={syntaxStyle} />}
+              {(content) => (
+                <FilePreviewBody
+                  content={content()}
+                  syntaxStyle={syntaxStyle}
+                  showDetails={props.showDetails}
+                />
+              )}
             </Show>
             <Show when={image()}>
               {(content) => (
                 <>
-                  <text fg="#ffffff">{content().title}</text>
-                  <text fg="#aaaaaa">{content().location}</text>
+                  <For each={previewTextLines(content(), props.showDetails)}>
+                    {(line, index) => (
+                      <text fg={index() === 0 ? "#ffffff" : "#aaaaaa"}>{line}</text>
+                    )}
+                  </For>
                   <image
                     source={content().data}
                     width={OVERLAY_WIDTH - 4}
