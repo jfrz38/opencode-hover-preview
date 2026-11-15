@@ -84,7 +84,7 @@ export async function loadFilePreview(
   workspace: string,
   signal: AbortSignal,
   imagePreview = true,
-): Promise<PreviewContent> {
+): Promise<PreviewContent | undefined> {
   const requestedPath = targetPath(target)
   if (requestedPath === undefined || requestedPath.length === 0) {
     return unavailable("The target is not a local file path.")
@@ -109,7 +109,7 @@ export async function loadFilePreview(
     const bytes = await readPrefix(resolvedPath, fileStat.size, signal)
     const imageMime = detectImageMime(bytes)
     if (imageMime !== undefined) {
-      if (!imagePreview) return unavailable("Image previews are disabled by plugin configuration.")
+      if (!imagePreview) return undefined
       if (fileStat.size > MAX_IMAGE_BYTES) return unavailable("The image is too large to preview.")
 
       const imageData = await readPrefix(resolvedPath, fileStat.size, signal, MAX_IMAGE_BYTES)

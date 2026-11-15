@@ -8,7 +8,7 @@ import { positionOverlay, type Point } from "../domain/overlay-position.js"
 import type { PreviewTarget } from "../domain/preview-target.js"
 import { inspectRenderable } from "../opentui/renderable-inspector.js"
 import { observeRootMouse } from "../opentui/root-mouse-observer.js"
-import { loadPreview, type PreviewOptions } from "../preview/load-preview.js"
+import { canLoadPreview, loadPreview, type PreviewOptions } from "../preview/load-preview.js"
 import { PreviewCache } from "../preview/preview-cache.js"
 import { previewTextLines } from "./preview-content-display.js"
 import { resolveFilePreviewFormat } from "./file-preview-format.js"
@@ -25,7 +25,6 @@ interface HoverTarget {
 }
 
 interface PreviewState extends HoverTarget {
-  readonly status: "loading" | "ready"
   readonly content?: PreviewContent
 }
 
@@ -36,6 +35,12 @@ function isInsideOverlay(renderable: Renderable): boolean {
     current = current.parent
   }
   return false
+}
+
+function canShowLoading(target: PreviewTarget, options: PreviewOptions): boolean {
+  return target.kind === "url"
+    ? options.urlPreview && options.imagePreview
+    : options.filePreview && options.imagePreview
 }
 
 function FilePreviewBody(props: {
@@ -122,12 +127,14 @@ export function PreviewOverlay(props: {
     const currentGeneration = ++generation
     activeLoad?.abort()
     activeLoad = undefined
-    setVisible({ ...candidate, status: "loading" })
+    if (canShowLoading(candidate.target, props.previewOptions)) {
+      setVisible(candidate)
+    }
 
     const key = `${candidate.target.kind}:${candidate.target.value}`
     const cached = cache.get(key)
     if (cached !== undefined) {
-      setVisible({ ...candidate, status: "ready", content: cached })
+      setVisible({ ...candidate, content: cached })
       return
     }
 
@@ -141,14 +148,25 @@ export function PreviewOverlay(props: {
     )
       .then((content) => {
         if (controller.signal.aborted || currentGeneration !== generation) return
+        if (content === undefined) {
+          setVisible(undefined)
+          return
+        }
         cache.set(key, content)
-        setVisible({ ...candidate, status: "ready", content })
+        setVisible({ ...candidate, content })
       })
       .catch(() => {
         if (controller.signal.aborted || currentGeneration !== generation) return
+        const originEnabled =
+          candidate.target.kind === "url"
+            ? props.previewOptions.urlPreview
+            : props.previewOptions.filePreview
+        if (!originEnabled) {
+          setVisible(undefined)
+          return
+        }
         setVisible({
           ...candidate,
-          status: "ready",
           content: {
             kind: "unavailable",
             title: "Preview unavailable",
@@ -182,7 +200,7 @@ export function PreviewOverlay(props: {
     if (event.type !== "over" && event.type !== "move") return
 
     const target = inspectRenderable(renderable, { x: event.x, y: event.y }).target
-    if (target === undefined) {
+    if (target === undefined || !canLoadPreview(target, props.previewOptions)) {
       delay.leave()
       return
     }

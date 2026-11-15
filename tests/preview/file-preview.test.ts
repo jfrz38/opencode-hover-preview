@@ -123,7 +123,7 @@ describe("workspace file previews", () => {
     })
     const large = await loadFilePreview(target("./large.txt"), root, new AbortController().signal)
     expect(large).toMatchObject({ kind: "file", truncated: true })
-    if (large.kind === "file") expect(large.body.split("\n")).toHaveLength(20)
+    if (large?.kind === "file") expect(large.body.split("\n")).toHaveLength(20)
   })
 
   test("loads supported images from mentions and file links", async () => {
@@ -152,7 +152,7 @@ describe("workspace file previews", () => {
     expect(mentioned).toEqual(linked)
   })
 
-  test("honors the image switch and size limit", async () => {
+  test("suppresses disabled images before applying the size limit", async () => {
     const root = await workspace()
     const header = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
     await writeFile(join(root, "disabled.png"), header)
@@ -164,10 +164,7 @@ describe("workspace file previews", () => {
         new AbortController().signal,
         false,
       ),
-    ).toMatchObject({
-      kind: "unavailable",
-      description: "Image previews are disabled by plugin configuration.",
-    })
+    ).toBeUndefined()
 
     const oversized = new Uint8Array(10 * 1024 * 1024 + 1)
     oversized.set(header)

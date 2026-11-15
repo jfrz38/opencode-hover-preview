@@ -217,7 +217,7 @@ export async function loadUrlPreview(
   signal: AbortSignal,
   dependencies: UrlPreviewDependencies = defaultDependencies,
   imagePreview = true,
-): Promise<PreviewContent> {
+): Promise<PreviewContent | undefined> {
   if (target.kind !== "url") return unavailable("The target is not a URL.")
 
   const controller = new AbortController()
@@ -248,7 +248,7 @@ export async function loadUrlPreview(
       const contentType = response.headers.get("content-type")?.toLowerCase() ?? ""
       const imageMime = parseImageContentType(contentType)
       if (imageMime !== undefined) {
-        if (!imagePreview) return unavailable("Image previews are disabled by plugin configuration.")
+        if (!imagePreview) return undefined
         const data = await readLimitedBytes(response, controller.signal, MAX_IMAGE_BYTES)
         if (data === undefined) return unavailable("The image is too large to preview.")
         if (detectImageMime(data) !== imageMime) {

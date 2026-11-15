@@ -57,11 +57,12 @@ Run `/reload` after changing the plugin or its configuration.
 - `enabled`: enables the plugin; defaults to `true`.
 - `hoverDelayMs`: delay before loading a preview; defaults to `500` and is
   clamped between `0` and `10000`.
-- `urlPreview`: allows HTTP(S) metadata requests; defaults to `true`.
-- `filePreview`: allows workspace file reads; defaults to `true`.
-- `imagePreview`: renders supported local and remote images; defaults to `true`.
-  Local images also require `filePreview`; remote images also require
-  `urlPreview`.
+- `urlPreview`: shows previews for HTTP(S) pages; defaults to `true`. Turning it
+  off does not hide remote images when `imagePreview` is enabled.
+- `filePreview`: shows previews for workspace text files; defaults to `true`.
+  Turning it off does not hide local images when `imagePreview` is enabled.
+- `imagePreview`: shows supported local and remote images; defaults to `true`.
+  Turning it off does not affect HTTP(S) pages or text files.
 - `showDetails`: adds target diagnostics and metadata such as file paths, image
   locations, URL hosts, and sanitized URLs; defaults to `false`.
 
@@ -99,7 +100,9 @@ URL previews:
 DNS validation reduces accidental access to local services but is not a complete
 defense against DNS rebinding because the local runtime resolves the hostname
 again for the request. Localhost and private-network HTTP(S) URLs are not
-supported. Set `urlPreview` to `false` when network access must be prohibited.
+supported. Set both `urlPreview` and `imagePreview` to `false` when network
+access must be prohibited. Set both `filePreview` and `imagePreview` to `false`
+when workspace file reads must be prohibited.
 
 ## Formatted file previews
 
