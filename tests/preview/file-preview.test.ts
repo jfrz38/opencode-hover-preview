@@ -126,6 +126,60 @@ describe("workspace file previews", () => {
     if (large.kind === "file") expect(large.body.split("\n")).toHaveLength(20)
   })
 
+  test("loads supported images from mentions and file links", async () => {
+    const root = await workspace()
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3])
+    await writeFile(join(root, "image.png"), png)
+
+    const linked = await loadFilePreview(
+      target("./image.png"),
+      root,
+      new AbortController().signal,
+    )
+    const mentioned = await loadFilePreview(
+      target("@image.png", "file-mention"),
+      root,
+      new AbortController().signal,
+    )
+
+    expect(linked).toEqual({
+      kind: "image",
+      title: "image.png",
+      location: "image.png",
+      mime: "image/png",
+      data: png,
+    })
+    expect(mentioned).toEqual(linked)
+  })
+
+  test("honors the image switch and size limit", async () => {
+    const root = await workspace()
+    const header = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+    await writeFile(join(root, "disabled.png"), header)
+
+    expect(
+      await loadFilePreview(
+        target("@disabled.png", "file-mention"),
+        root,
+        new AbortController().signal,
+        false,
+      ),
+    ).toMatchObject({
+      kind: "unavailable",
+      description: "Image previews are disabled by plugin configuration.",
+    })
+
+    const oversized = new Uint8Array(10 * 1024 * 1024 + 1)
+    oversized.set(header)
+    await writeFile(join(root, "oversized.png"), oversized)
+    expect(
+      await loadFilePreview(target("./oversized.png"), root, new AbortController().signal),
+    ).toMatchObject({
+      kind: "unavailable",
+      description: "The image is too large to preview.",
+    })
+  })
+
   test("preserves Unicode and removes unsafe control characters", async () => {
     const root = await workspace()
     await writeFile(join(root, "unicode.txt"), "hola 👋\u0007\n")

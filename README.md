@@ -10,6 +10,8 @@ when the pointer rests on a supported inline target.
 | Public HTTP(S) URL | Page title, host, description, and sanitized URL |
 | `@file` mention | Text excerpt from the workspace file |
 | Markdown link to a workspace file | File name, relative path, and text excerpt |
+| `@image` mention or Markdown link to an image | Bounded PNG, JPEG, GIF, or WebP image |
+| Direct public HTTP(S) image URL | Bounded PNG, JPEG, GIF, or WebP image |
 
 HTTP(S) and local Markdown links work when OpenCode retains their source or link
 metadata. A flattened OSC 8 label whose destination has already been discarded
@@ -39,7 +41,8 @@ Reference the package from the OpenCode TUI configuration:
         "enabled": true,
         "hoverDelayMs": 500,
         "urlPreview": true,
-        "filePreview": true
+        "filePreview": true,
+        "imagePreview": true
       }
     }
   ]
@@ -55,6 +58,9 @@ Run `/reload` after changing the plugin or its configuration.
   clamped between `0` and `10000`.
 - `urlPreview`: allows HTTP(S) metadata requests; defaults to `true`.
 - `filePreview`: allows workspace file reads; defaults to `true`.
+- `imagePreview`: renders supported local and remote images; defaults to `true`.
+  Local images also require `filePreview`; remote images also require
+  `urlPreview`.
 
 `diagnostic: false` remains accepted as a legacy alias for `enabled: false`.
 
@@ -67,7 +73,8 @@ File previews:
 - ignore a local link's query string and fragment when resolving its file;
 - reject `file://`, unsupported URI schemes, and plain unlinked paths;
 - read at most 64 KiB;
-- reject directories, binary data, and invalid UTF-8;
+- read supported images up to 10 MiB and validate their binary signature;
+- reject directories, unsupported binary data, and invalid UTF-8;
 - show at most 20 lines and 4,000 characters.
 
 URL previews:
@@ -78,6 +85,8 @@ URL previews:
 - revalidate up to three manual redirects;
 - time out after three seconds;
 - accept only HTML and read at most 256 KiB;
+- accept PNG, JPEG, GIF, and WebP only when the response MIME matches its
+  binary signature, and read at most 10 MiB;
 - extract text metadata without executing or rendering remote HTML.
 
 DNS validation reduces accidental access to local services but is not a complete
@@ -85,9 +94,13 @@ defense against DNS rebinding because the local runtime resolves the hostname
 again for the request. Localhost and private-network HTTP(S) URLs are not
 supported. Set `urlPreview` to `false` when network access must be prohibited.
 
-## Native image previews
+## Image previews
 
-OpenCode can display images independently of this plugin:
+This plugin renders supported image targets in the hover overlay through
+OpenTUI. OpenTUI chooses Kitty, Sixel, or a terminal-block fallback according
+to terminal capabilities. GIF animation is not guaranteed.
+
+OpenCode can also display image attachments independently of this plugin:
 
 ```json
 {
@@ -96,10 +109,10 @@ OpenCode can display images independently of this plugin:
 }
 ```
 
-Image placeholders and pasted-content placeholders are outside this plugin's
-scope. OpenCode does not expose a reliable inline-hover mapping from those
-placeholders to their original content; pasted composer content is unavailable,
-and images already have the native preview above.
+Attachment placeholders such as `[Image N]` and pasted-content placeholders
+remain outside this plugin's scope. OpenCode does not expose a reliable
+inline-hover mapping from those placeholders to their original content, and
+pasted composer content is unavailable to the plugin.
 
 ## Development
 

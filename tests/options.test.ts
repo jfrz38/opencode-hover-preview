@@ -8,6 +8,7 @@ describe("plugin options", () => {
       hoverDelayMs: 500,
       urlPreview: true,
       filePreview: true,
+      imagePreview: true,
     })
   })
 
@@ -19,9 +20,10 @@ describe("plugin options", () => {
   test("supports feature switches and the legacy diagnostic alias", () => {
     expect(parseOptions({ enabled: false }).enabled).toBe(false)
     expect(parseOptions({ diagnostic: false }).enabled).toBe(false)
-    expect(parseOptions({ urlPreview: false, filePreview: false })).toMatchObject({
+    expect(parseOptions({ urlPreview: false, filePreview: false, imagePreview: false })).toMatchObject({
       urlPreview: false,
       filePreview: false,
+      imagePreview: false,
     })
   })
 

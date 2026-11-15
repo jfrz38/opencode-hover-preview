@@ -34,4 +34,23 @@ describe("preview cache", () => {
     expect(cache.get("one")).toEqual(content)
     expect(cache.get("three")).toEqual(content)
   })
+
+  test("bounds cached image bytes", () => {
+    const cache = new PreviewCache(100, 60_000, () => 0, 5)
+    const image = (size: number): PreviewContent => ({
+      kind: "image",
+      title: "image.png",
+      location: "image.png",
+      mime: "image/png",
+      data: new Uint8Array(size),
+    })
+
+    cache.set("one", image(3))
+    cache.set("two", image(3))
+    expect(cache.get("one")).toBeUndefined()
+    expect(cache.get("two")).toEqual(image(3))
+
+    cache.set("oversized", image(6))
+    expect(cache.get("oversized")).toBeUndefined()
+  })
 })

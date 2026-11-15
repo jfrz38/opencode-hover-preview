@@ -6,6 +6,7 @@ import { loadUrlPreview } from "./url-preview.js"
 export interface PreviewOptions {
   readonly urlPreview: boolean
   readonly filePreview: boolean
+  readonly imagePreview: boolean
 }
 
 function unavailable(title: string, description: string): PreviewContent {
@@ -21,7 +22,7 @@ export async function loadPreview(
   switch (target.kind) {
     case "url":
       return options.urlPreview
-        ? loadUrlPreview(target, signal)
+        ? loadUrlPreview(target, signal, undefined, options.imagePreview)
         : unavailable("URL preview disabled", "Network requests are disabled by plugin configuration.")
     case "file-mention":
     case "file-link":
@@ -31,6 +32,6 @@ export async function loadPreview(
       if (workspace === undefined) {
         return unavailable("File preview unavailable", "OpenCode has not provided a workspace directory.")
       }
-      return loadFilePreview(target, workspace, signal)
+      return loadFilePreview(target, workspace, signal, options.imagePreview)
   }
 }

@@ -126,6 +126,92 @@ describe("URL previews", () => {
     })
   })
 
+  test.each([
+    ["image/png", [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
+    ["image/jpeg", [0xff, 0xd8, 0xff]],
+    ["image/gif", [0x47, 0x49, 0x46, 0x38, 0x37, 0x61]],
+    ["image/webp", [0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]],
+  ] as const)("loads direct %s URLs", async (mime, signature) => {
+    const data = new Uint8Array(signature)
+    const fetchImplementation = async () =>
+      new Response(data, { headers: { "content-type": mime } })
+
+    expect(
+      await loadUrlPreview(
+        target("https://example.com/assets/photo.png?token=secret#large"),
+        new AbortController().signal,
+        dependencies(fetchImplementation),
+      ),
+    ).toEqual({
+      kind: "image",
+      title: "photo.png",
+      location: "https://example.com/assets/photo.png",
+      mime,
+      data,
+    })
+  })
+
+  test("rejects mismatched, unsupported, disabled, and oversized images", async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+    const mismatch = async () =>
+      new Response(png, { headers: { "content-type": "image/jpeg" } })
+    expect(
+      await loadUrlPreview(
+        target("https://example.com/image.jpg"),
+        new AbortController().signal,
+        dependencies(mismatch),
+      ),
+    ).toMatchObject({
+      kind: "unavailable",
+      description: "The image content did not match its Content-Type.",
+    })
+
+    const unsupported = async () =>
+      new Response("<svg/>", { headers: { "content-type": "image/svg+xml" } })
+    expect(
+      await loadUrlPreview(
+        target("https://example.com/image.svg"),
+        new AbortController().signal,
+        dependencies(unsupported),
+      ),
+    ).toMatchObject({
+      kind: "unavailable",
+      description: "The URL returned an unsupported image format.",
+    })
+
+    const valid = async () =>
+      new Response(png, { headers: { "content-type": "image/png" } })
+    expect(
+      await loadUrlPreview(
+        target("https://example.com/image.png"),
+        new AbortController().signal,
+        dependencies(valid),
+        false,
+      ),
+    ).toMatchObject({
+      kind: "unavailable",
+      description: "Image previews are disabled by plugin configuration.",
+    })
+
+    const oversized = async () =>
+      new Response(null, {
+        headers: {
+          "content-type": "image/png",
+          "content-length": String(10 * 1024 * 1024 + 1),
+        },
+      })
+    expect(
+      await loadUrlPreview(
+        target("https://example.com/large.png"),
+        new AbortController().signal,
+        dependencies(oversized),
+      ),
+    ).toMatchObject({
+      kind: "unavailable",
+      description: "The image is too large to preview.",
+    })
+  })
+
   test("times out and propagates caller cancellation", async () => {
     const pending: UrlPreviewDependencies["fetch"] = (_input, init) =>
       new Promise<Response>((_resolve, reject) => {

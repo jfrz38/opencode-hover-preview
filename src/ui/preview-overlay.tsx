@@ -12,6 +12,7 @@ import { PreviewCache } from "../preview/preview-cache.js"
 
 const OVERLAY_WIDTH = 70
 const MAX_OVERLAY_HEIGHT = 16
+const IMAGE_HEIGHT = 10
 const OVERLAY_ID = "opencode-link-preview.overlay"
 
 interface HoverTarget {
@@ -26,6 +27,8 @@ interface PreviewState extends HoverTarget {
 
 function contentLines(content: PreviewContent): string[] {
   switch (content.kind) {
+    case "image":
+      return [content.title, content.location]
     case "url":
       return [content.title, content.host, content.description, content.url].filter(
         (line): line is string => line !== undefined && line !== "",
@@ -56,6 +59,19 @@ export function PreviewOverlay(props: {
     activeLoad?.abort()
     activeLoad = undefined
     setVisible(undefined)
+  }
+
+  const showImageError = () => {
+    const current = visible()
+    if (current?.content?.kind !== "image") return
+    setVisible({
+      ...current,
+      content: {
+        kind: "unavailable",
+        title: "Image preview unavailable",
+        description: "The terminal could not render this image.",
+      },
+    })
   }
 
   const showPreview = (candidate: HoverTarget) => {
@@ -145,7 +161,14 @@ export function PreviewOverlay(props: {
           const content = state().content
           return content === undefined ? ["Loading preview…"] : contentLines(content)
         }
-        const overlayHeight = () => Math.min(MAX_OVERLAY_HEIGHT, Math.max(6, lines().length + 4))
+        const image = () => {
+          const content = state().content
+          return content?.kind === "image" ? content : undefined
+        }
+        const overlayHeight = () =>
+          image() === undefined
+            ? Math.min(MAX_OVERLAY_HEIGHT, Math.max(6, lines().length + 4))
+            : MAX_OVERLAY_HEIGHT
         const position = () =>
           positionOverlay(
             state().pointer,
@@ -174,7 +197,25 @@ export function PreviewOverlay(props: {
             <text fg="#79d279">
               {state().target.kind} · {state().target.source}
             </text>
-            <For each={lines()}>{(line) => <text fg="#dddddd">{line}</text>}</For>
+            <Show
+              when={image()}
+              fallback={<For each={lines()}>{(line) => <text fg="#dddddd">{line}</text>}</For>}
+            >
+              {(content) => (
+                <>
+                  <text fg="#ffffff">{content().title}</text>
+                  <text fg="#aaaaaa">{content().location}</text>
+                  <image
+                    source={content().data}
+                    width={OVERLAY_WIDTH - 4}
+                    height={IMAGE_HEIGHT}
+                    fit="fit"
+                    protocol="auto"
+                    onError={showImageError}
+                  />
+                </>
+              )}
+            </Show>
           </box>
         )
       }}

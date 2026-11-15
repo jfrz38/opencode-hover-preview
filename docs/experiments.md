@@ -22,7 +22,9 @@ OpenCode has native image preview settings:
 }
 ```
 
-Images are therefore outside this plugin's scope.
+OpenCode's native setting covers attachments. This plugin separately previews
+direct local and remote image targets on hover; attachment placeholders remain
+outside its scope because they cannot be mapped reliably to their content.
 
 ## Load the plugin
 
@@ -63,8 +65,10 @@ using the renderable's public line, wrapping, scroll, and text data.
 | Assistant response | Flattened Markdown label | No | None | Yes | No-go |
 | Assistant response | Plain URL | Literal target | Exact cell | Yes | Experimental |
 | Assistant response | Markdown link to workspace file | Conditional | Exact cell | Yes | Experimental |
+| Assistant response | Direct public image URL | Literal/conditional | Exact cell | Yes | Experimental |
 | Prompt | Pasted HTTP(S) URL | Literal target | Exact cell | Yes | Experimental |
 | Prompt | `@README.md` | Literal target | Exact cell | Yes | Experimental |
+| Prompt | `@image.png` | Literal target | Exact cell | Yes | Experimental |
 | Sent user message | HTTP(S) URL/`@file`/local file link | Pending | Pending | Pending | Pending |
 
 ## Protocol

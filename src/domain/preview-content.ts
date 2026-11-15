@@ -1,5 +1,12 @@
 export type PreviewContent =
   | {
+      readonly kind: "image"
+      readonly title: string
+      readonly location: string
+      readonly mime: "image/png" | "image/jpeg" | "image/gif" | "image/webp"
+      readonly data: Uint8Array
+    }
+  | {
       readonly kind: "file"
       readonly title: string
       readonly path: string

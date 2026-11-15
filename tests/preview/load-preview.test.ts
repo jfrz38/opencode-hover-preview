@@ -12,7 +12,7 @@ describe("preview loading", () => {
       await loadPreview(
         target("url", "https://example.com"),
         undefined,
-        { urlPreview: false, filePreview: false },
+        { urlPreview: false, filePreview: false, imagePreview: false },
         new AbortController().signal,
       ),
     ).toMatchObject({ kind: "unavailable", title: "URL preview disabled" })
@@ -21,7 +21,7 @@ describe("preview loading", () => {
       await loadPreview(
         target("file-link", "./README.md"),
         process.cwd(),
-        { urlPreview: false, filePreview: false },
+        { urlPreview: false, filePreview: false, imagePreview: false },
         new AbortController().signal,
       ),
     ).toMatchObject({ kind: "unavailable", title: "File preview disabled" })

@@ -2,8 +2,9 @@ import { lookup } from "node:dns/promises"
 import { isIP } from "node:net"
 import type { PreviewContent } from "../domain/preview-content.js"
 import type { PreviewTarget } from "../domain/preview-target.js"
+import { detectImageMime, MAX_IMAGE_BYTES, parseImageContentType } from "./image-format.js"
 
-const MAX_RESPONSE_BYTES = 256 * 1024
+const MAX_HTML_BYTES = 256 * 1024
 const MAX_REDIRECTS = 3
 const DEFAULT_TIMEOUT_MS = 3_000
 
@@ -170,10 +171,14 @@ function extractMetadata(html: string): { readonly title?: string; readonly desc
   return { title: title || undefined, description: description || undefined }
 }
 
-async function readLimitedBody(response: Response, signal: AbortSignal): Promise<string | undefined> {
+async function readLimitedBytes(
+  response: Response,
+  signal: AbortSignal,
+  maxBytes: number,
+): Promise<Uint8Array | undefined> {
   const declaredLength = Number(response.headers.get("content-length"))
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_RESPONSE_BYTES) return undefined
-  if (response.body === null) return ""
+  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) return undefined
+  if (response.body === null) return new Uint8Array()
 
   const reader = response.body.getReader()
   const chunks: Uint8Array[] = []
@@ -184,7 +189,7 @@ async function readLimitedBody(response: Response, signal: AbortSignal): Promise
       const result = await reader.read()
       if (result.done) break
       received += result.value.byteLength
-      if (received > MAX_RESPONSE_BYTES) {
+      if (received > maxBytes) {
         await reader.cancel()
         return undefined
       }
@@ -200,7 +205,7 @@ async function readLimitedBody(response: Response, signal: AbortSignal): Promise
     bytes.set(chunk, offset)
     offset += chunk.byteLength
   }
-  return new TextDecoder().decode(bytes)
+  return bytes
 }
 
 function sanitizedUrl(url: URL): string {
@@ -211,6 +216,7 @@ export async function loadUrlPreview(
   target: PreviewTarget,
   signal: AbortSignal,
   dependencies: UrlPreviewDependencies = defaultDependencies,
+  imagePreview = true,
 ): Promise<PreviewContent> {
   if (target.kind !== "url") return unavailable("The target is not a URL.")
 
@@ -228,7 +234,7 @@ export async function loadUrlPreview(
       const response = await dependencies.fetch(url, {
         redirect: "manual",
         signal: controller.signal,
-        headers: { accept: "text/html" },
+        headers: { accept: "text/html,image/png,image/jpeg,image/gif,image/webp" },
       })
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get("location")
@@ -240,10 +246,41 @@ export async function loadUrlPreview(
       if (!response.ok) return unavailable(`The server returned HTTP ${response.status}.`)
 
       const contentType = response.headers.get("content-type")?.toLowerCase() ?? ""
+      const imageMime = parseImageContentType(contentType)
+      if (imageMime !== undefined) {
+        if (!imagePreview) return unavailable("Image previews are disabled by plugin configuration.")
+        const data = await readLimitedBytes(response, controller.signal, MAX_IMAGE_BYTES)
+        if (data === undefined) return unavailable("The image is too large to preview.")
+        if (detectImageMime(data) !== imageMime) {
+          return unavailable("The image content did not match its Content-Type.")
+        }
+
+        const encodedName = url.pathname.split("/").filter(Boolean).at(-1)
+        let title = encodedName ?? url.hostname
+        try {
+          title = decodeURIComponent(title)
+        } catch {
+          // Keep the encoded path segment when it is not valid URI text.
+        }
+        return {
+          kind: "image",
+          title,
+          location: sanitizedUrl(url),
+          mime: imageMime,
+          data,
+        }
+      }
+      if (contentType.startsWith("image/")) {
+        return unavailable("The URL returned an unsupported image format.")
+      }
       if (!contentType.startsWith("text/html")) return unavailable("The URL did not return an HTML document.")
 
-      const html = await readLimitedBody(response, controller.signal)
-      if (html === undefined) return unavailable("The HTML document is too large to preview.")
+      const htmlBytes = await readLimitedBytes(response, controller.signal, MAX_HTML_BYTES)
+      if (htmlBytes === undefined) return unavailable("The HTML document is too large to preview.")
+      if (detectImageMime(htmlBytes) !== undefined) {
+        return unavailable("The response content did not match its Content-Type.")
+      }
+      const html = new TextDecoder().decode(htmlBytes)
       const metadata = extractMetadata(html)
       return {
         kind: "url",
