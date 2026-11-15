@@ -1,9 +1,17 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "opencode-hover-preview",
+  "name": "@jfrz38/opencode-hover-preview",
   "version": "0.0.0",
-  "private": true,
   "type": "module",
+  "packageManager": "bun@1.4.4",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jfrz38/opencode-hover-preview.git"
+  },
+  "homepage": "https://github.com/jfrz38/opencode-hover-preview#readme",
+  "bugs": {
+    "url": "https://github.com/jfrz38/opencode-hover-preview/issues"
+  },
   "exports": {
     "./tui": "./src/tui.tsx"
   },
@@ -34,5 +42,8 @@
   "engines": {
     "bun": ">=1.3.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

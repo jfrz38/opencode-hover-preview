@@ -29,6 +29,12 @@ Install dependencies:
 make install
 ```
 
+Install the published plugin:
+
+```sh
+bun add @jfrz38/opencode-hover-preview
+```
+
 Reference the package from the OpenCode TUI configuration:
 
 ```json
