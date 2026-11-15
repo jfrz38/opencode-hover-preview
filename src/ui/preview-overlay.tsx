@@ -12,11 +12,8 @@ import { canLoadPreview, loadPreview, type PreviewOptions } from "../preview/loa
 import { PreviewCache } from "../preview/preview-cache.js"
 import { previewTextLines } from "./preview-content-display.js"
 import { resolveFilePreviewFormat } from "./file-preview-format.js"
+import { calculatePreviewOverlayLayout } from "./preview-overlay-layout.js"
 
-const OVERLAY_WIDTH = 70
-const MAX_OVERLAY_HEIGHT = 16
-const FILE_BODY_HEIGHT = 8
-const IMAGE_HEIGHT = 10
 const OVERLAY_ID = "opencode-hover-preview.overlay"
 
 interface HoverTarget {
@@ -41,6 +38,7 @@ function FilePreviewBody(props: {
   readonly content: Extract<PreviewContent, { readonly kind: "file" }>
   readonly syntaxStyle: SyntaxStyle
   readonly showDetails: boolean
+  readonly bodyHeight: number
 }) {
   const body = () => {
     const format = resolveFilePreviewFormat(props.content.language)
@@ -74,7 +72,7 @@ function FilePreviewBody(props: {
       <For each={previewTextLines(props.content, props.showDetails)}>
         {(line, index) => <text fg={index() === 0 ? "#ffffff" : "#aaaaaa"}>{line}</text>}
       </For>
-      <box height={FILE_BODY_HEIGHT} overflow="hidden">
+      <box height={props.bodyHeight} overflow="hidden">
         {body()}
       </box>
       <Show when={props.content.truncated}>
@@ -89,6 +87,9 @@ export function PreviewOverlay(props: {
   readonly workspace?: string
   readonly previewOptions: PreviewOptions
   readonly showDetails: boolean
+  readonly previewWidth: number
+  readonly previewMinHeight: number
+  readonly previewMaxHeight: number
 }) {
   const context = usePlugin()
   const syntaxStyle = generateSyntax(context.theme, context.renderer.nativeScene)
@@ -222,23 +223,21 @@ export function PreviewOverlay(props: {
           const content = state().content
           return content?.kind === "file" ? content : undefined
         }
-        const overlayHeight = () => {
-          if (props.showDetails) {
-            return image() === undefined && file() === undefined
-              ? Math.min(MAX_OVERLAY_HEIGHT, Math.max(6, lines().length + 4))
-              : MAX_OVERLAY_HEIGHT
-          }
-          const imageContent = image()
-          if (imageContent !== undefined) return IMAGE_HEIGHT + 2
-          const fileContent = file()
-          if (fileContent !== undefined) return FILE_BODY_HEIGHT + (fileContent.truncated ? 3 : 2)
-          return Math.min(MAX_OVERLAY_HEIGHT, Math.max(4, lines().length + 2))
-        }
+        const layout = () =>
+          calculatePreviewOverlayLayout({
+            content: state().content,
+            lineCount: lines().length,
+            showDetails: props.showDetails,
+            viewport: { width: context.renderer.width, height: context.renderer.height },
+            previewWidth: props.previewWidth,
+            previewMinHeight: props.previewMinHeight,
+            previewMaxHeight: props.previewMaxHeight,
+          })
         const position = () =>
           positionOverlay(
             state().pointer,
             { width: context.renderer.width, height: context.renderer.height },
-            { width: OVERLAY_WIDTH, height: overlayHeight() },
+            { width: layout().width, height: layout().height },
           )
 
         return (
@@ -247,8 +246,8 @@ export function PreviewOverlay(props: {
             position="absolute"
             left={position().x}
             top={position().y}
-            width={OVERLAY_WIDTH}
-            height={overlayHeight()}
+            width={layout().width}
+            height={layout().height}
             zIndex={10_000}
             border
             borderStyle="rounded"
@@ -270,6 +269,7 @@ export function PreviewOverlay(props: {
                   content={content()}
                   syntaxStyle={syntaxStyle}
                   showDetails={props.showDetails}
+                  bodyHeight={layout().fileBodyHeight}
                 />
               )}
             </Show>
@@ -283,8 +283,8 @@ export function PreviewOverlay(props: {
                   </For>
                   <image
                     source={content().data}
-                    width={OVERLAY_WIDTH - 4}
-                    height={IMAGE_HEIGHT}
+                    width={Math.max(0, layout().width - 4)}
+                    height={layout().imageHeight}
                     fit="fit"
                     protocol="auto"
                     onError={showImageError}

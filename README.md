@@ -43,7 +43,10 @@ Reference the package from the OpenCode TUI configuration:
         "urlPreview": true,
         "filePreview": true,
         "imagePreview": true,
-        "showDetails": false
+        "showDetails": false,
+        "previewWidth": 70,
+        "previewMinHeight": 4,
+        "previewMaxHeight": 16
       }
     }
   ]
@@ -65,6 +68,16 @@ Run `/reload` after changing the plugin or its configuration.
   Turning it off does not affect HTTP(S) pages or text files.
 - `showDetails`: adds target diagnostics and metadata such as file paths, image
   locations, URL hosts, and sanitized URLs; defaults to `false`.
+- `previewWidth`: desired preview width in terminal columns; defaults to `70`.
+  It is reduced automatically when the terminal is narrower.
+- `previewMinHeight`: minimum preview height in terminal rows; defaults to `4`.
+- `previewMaxHeight`: maximum preview height in terminal rows; defaults to `16`.
+  The preview remains content-sized within this range and is reduced
+  automatically when the terminal is shorter.
+
+Preview dimensions accept positive integers. Values below the renderable
+minimum are raised, fractional values are rounded down, and
+`previewMaxHeight` is raised when necessary to match `previewMinHeight`.
 
 Previews use a compact presentation by default: files show their formatted
 content, images show the image, and URLs show the fetched title and description.

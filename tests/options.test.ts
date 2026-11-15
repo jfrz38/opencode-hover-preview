@@ -10,6 +10,9 @@ describe("plugin options", () => {
       filePreview: true,
       imagePreview: true,
       showDetails: false,
+      previewWidth: 70,
+      previewMinHeight: 4,
+      previewMaxHeight: 16,
     })
   })
 
@@ -34,4 +37,34 @@ describe("plugin options", () => {
     expect(parseOptions({ showDetails: "true" }).showDetails).toBe(false)
   })
 
+  test("supports custom preview dimensions", () => {
+    expect(
+      parseOptions({ previewWidth: 90.8, previewMinHeight: 6.9, previewMaxHeight: 24.2 }),
+    ).toMatchObject({
+      previewWidth: 90,
+      previewMinHeight: 6,
+      previewMaxHeight: 24,
+    })
+  })
+
+  test("normalizes invalid and contradictory preview dimensions", () => {
+    expect(
+      parseOptions({
+        previewWidth: Number.POSITIVE_INFINITY,
+        previewMinHeight: -2,
+        previewMaxHeight: "12",
+      }),
+    ).toMatchObject({
+      previewWidth: 70,
+      previewMinHeight: 4,
+      previewMaxHeight: 16,
+    })
+    expect(
+      parseOptions({ previewWidth: 2, previewMinHeight: 20, previewMaxHeight: 10 }),
+    ).toMatchObject({
+      previewWidth: 4,
+      previewMinHeight: 20,
+      previewMaxHeight: 20,
+    })
+  })
 })

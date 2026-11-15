@@ -16,6 +16,9 @@ export default Plugin.define({
           workspace={context.location?.directory}
           previewOptions={options}
           showDetails={options.showDetails}
+          previewWidth={options.previewWidth}
+          previewMinHeight={options.previewMinHeight}
+          previewMaxHeight={options.previewMaxHeight}
         />
       ),
     })
