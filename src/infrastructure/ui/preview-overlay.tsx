@@ -3,7 +3,7 @@ import { generateSyntax } from "@opencode/theme/tui"
 import type { MouseEvent, NativeImage, Renderable, SyntaxStyle } from "@opentui/core"
 import { createSignal, For, onCleanup, Show } from "solid-js"
 import type { PreviewOutcome } from "../../core/preview-content.js"
-import { canLoadPreview, type PreviewSources } from "../../core/preview-policy.js"
+import { type PreviewSourceSelection } from "../../core/preview-policy.js"
 import type { PreviewTarget } from "../../core/preview-target.js"
 import { inspectRenderable } from "../opentui/renderable-inspector.js"
 import { observeRootMouse } from "../opentui/root-mouse-observer.js"
@@ -96,7 +96,7 @@ function FilePreviewBody(props: {
 export function PreviewOverlay(props: {
   readonly delayMs: number
   readonly workspace?: string
-  readonly sources: PreviewSources
+  readonly sources: PreviewSourceSelection
   readonly display: PreviewDisplayOptions
 }) {
   const context = usePlugin()
@@ -107,16 +107,6 @@ export function PreviewOverlay(props: {
   const session = new PreviewSession<HoverTarget>(
     (target, signal) => loadPreview(target, props.workspace, props.sources, signal),
     setVisible,
-    (target) => {
-      const originEnabled = target.kind === "url" ? props.sources.url : props.sources.file
-      return originEnabled
-        ? {
-            kind: "unavailable",
-            title: "Preview unavailable",
-            description: "The preview could not be loaded.",
-          }
-        : undefined
-    },
   )
 
   const showImageError = () => {
@@ -125,9 +115,8 @@ export function PreviewOverlay(props: {
     setVisible({
       ...current,
       outcome: {
-        kind: "unavailable",
-        title: "Image preview unavailable",
-        description: "The terminal could not render this image.",
+        kind: "failure",
+        reason: "load-failed",
       },
     })
   }
@@ -165,7 +154,7 @@ export function PreviewOverlay(props: {
     if (event.type !== "over" && event.type !== "move") return
 
     const target = inspectRenderable(renderable, { x: event.x, y: event.y }).target
-    if (target === undefined || !canLoadPreview(target, props.sources)) {
+    if (target === undefined || !props.sources.canLoad(target)) {
       delay.leave()
       return
     }

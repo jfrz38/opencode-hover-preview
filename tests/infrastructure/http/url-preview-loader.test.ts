@@ -62,7 +62,7 @@ describe("URL previews", () => {
           new AbortController().signal,
           dependencies(fetchImplementation),
         ),
-      ).toMatchObject({ kind: "unavailable" })
+      ).toMatchObject({ kind: "failure" })
     }
     expect(requests).toBe(0)
 
@@ -73,8 +73,8 @@ describe("URL previews", () => {
         dependencies(fetchImplementation, ["10.0.0.2"]),
       ),
     ).toMatchObject({
-      kind: "unavailable",
-      description: "Local and private network addresses are not allowed.",
+      kind: "failure",
+      reason: "private-address",
     })
     expect(requests).toBe(0)
   })
@@ -93,8 +93,8 @@ describe("URL previews", () => {
         dependencies(fetchImplementation),
       ),
     ).toMatchObject({
-      kind: "unavailable",
-      description: "Local and private network addresses are not allowed.",
+      kind: "failure",
+      reason: "private-address",
     })
     expect(requests).toBe(1)
   })
@@ -121,8 +121,8 @@ describe("URL previews", () => {
         dependencies(oversized),
       ),
     ).toMatchObject({
-      kind: "unavailable",
-      description: "The HTML document is too large to preview.",
+      kind: "failure",
+      reason: "html-too-large",
     })
   })
 
@@ -162,8 +162,8 @@ describe("URL previews", () => {
         dependencies(mismatch),
       ),
     ).toMatchObject({
-      kind: "unavailable",
-      description: "The image content did not match its Content-Type.",
+      kind: "failure",
+      reason: "image-content-mismatch",
     })
 
     const unsupported = async () =>
@@ -201,8 +201,8 @@ describe("URL previews", () => {
         dependencies(oversized),
       ),
     ).toMatchObject({
-      kind: "unavailable",
-      description: "The image is too large to preview.",
+      kind: "failure",
+      reason: "image-too-large",
     })
   })
 
@@ -223,8 +223,8 @@ describe("URL previews", () => {
         dependencies(pending, ["93.184.216.34"], 1),
       ),
     ).toMatchObject({
-      kind: "unavailable",
-      description: "The URL preview timed out.",
+      kind: "failure",
+      reason: "url-timeout",
     })
 
     const controller = new AbortController()
@@ -235,6 +235,24 @@ describe("URL previews", () => {
     )
     controller.abort()
     await expect(preview).rejects.toBeDefined()
+  })
+
+  test("does not start a request when the caller has already cancelled", async () => {
+    let requests = 0
+    const controller = new AbortController()
+    controller.abort(new DOMException("Cancelled", "AbortError"))
+
+    await expect(
+      loadUrlPreview(
+        target("https://example.com"),
+        controller.signal,
+        dependencies(async () => {
+          requests++
+          return new Response()
+        }),
+      ),
+    ).rejects.toBeDefined()
+    expect(requests).toBe(0)
   })
 
   test("applies the timeout while DNS resolution is pending", async () => {
@@ -253,8 +271,8 @@ describe("URL previews", () => {
         neverResolvingDns,
       ),
     ).toMatchObject({
-      kind: "unavailable",
-      description: "The URL preview timed out.",
+      kind: "failure",
+      reason: "url-timeout",
     })
   })
 })

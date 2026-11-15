@@ -6,16 +6,27 @@ interface CacheEntry {
   readonly bytes: number
 }
 
+export interface PreviewCacheOptions {
+  readonly maxEntries?: number
+  readonly ttlMs?: number
+  readonly now?: () => number
+  readonly maxBytes?: number
+}
+
 export class PreviewCache {
   private readonly entries = new Map<string, CacheEntry>()
   private totalBytes = 0
+  private readonly maxEntries: number
+  private readonly ttlMs: number
+  private readonly now: () => number
+  private readonly maxBytes: number
 
-  constructor(
-    private readonly maxEntries = 100,
-    private readonly ttlMs = 5 * 60_000,
-    private readonly now: () => number = Date.now,
-    private readonly maxBytes = 32 * 1024 * 1024,
-  ) {}
+  constructor(options: PreviewCacheOptions = {}) {
+    this.maxEntries = options.maxEntries ?? 100
+    this.ttlMs = options.ttlMs ?? 5 * 60_000
+    this.now = options.now ?? Date.now
+    this.maxBytes = options.maxBytes ?? 32 * 1024 * 1024
+  }
 
   private delete(key: string): void {
     const entry = this.entries.get(key)

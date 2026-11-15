@@ -62,8 +62,8 @@ describe("workspace file previews", () => {
     expect(
       await loadFilePreview(target(join(root, "..", "outside.txt")), root, new AbortController().signal),
     ).toMatchObject({
-      kind: "unavailable",
-      description: "The file is outside the current workspace.",
+      kind: "failure",
+      reason: "outside-workspace",
     })
   })
 
@@ -98,8 +98,8 @@ describe("workspace file previews", () => {
     expect(
       await loadFilePreview(target("./linked.txt"), root, new AbortController().signal),
     ).toMatchObject({
-      kind: "unavailable",
-      description: "The file resolves outside the current workspace.",
+      kind: "failure",
+      reason: "workspace-link-escape",
     })
   })
 
@@ -165,8 +165,8 @@ describe("workspace file previews", () => {
     expect(
       await loadFilePreview(target("./oversized.png"), root, new AbortController().signal),
     ).toMatchObject({
-      kind: "unavailable",
-      description: "The image is too large to preview.",
+      kind: "failure",
+      reason: "image-too-large",
     })
   })
 

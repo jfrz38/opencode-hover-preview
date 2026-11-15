@@ -68,11 +68,10 @@ describe("preview content display", () => {
     ])
   })
 
-  test("always displays loading failures", () => {
+  test("maps loading failures to presentation text", () => {
     const unavailable: PreviewOutcome = {
-      kind: "unavailable",
-      title: "Preview unavailable",
-      description: "The preview could not be loaded.",
+      kind: "failure",
+      reason: "load-failed",
     }
 
     expect(previewTextLines(unavailable, false)).toEqual([

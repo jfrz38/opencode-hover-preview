@@ -1,31 +1,50 @@
-import type { PreviewOutcome } from "./preview-content.js"
+import type { PreviewContent, PreviewOutcome } from "./preview-content.js"
 import type { PreviewTarget } from "./preview-target.js"
 
-export interface PreviewSources {
+export interface PreviewSourceSelectionInput {
   readonly url: boolean
   readonly file: boolean
   readonly image: boolean
 }
 
-export function canLoadPreview(target: PreviewTarget, sources: PreviewSources): boolean {
-  return target.kind === "url"
-    ? sources.url || sources.image
-    : sources.file || sources.image
-}
+export class PreviewSourceSelection {
+  readonly #url: boolean
+  readonly #file: boolean
+  readonly #image: boolean
 
-export function isPreviewEnabled(
-  target: PreviewTarget,
-  outcome: PreviewOutcome,
-  sources: PreviewSources,
-): boolean {
-  switch (outcome.kind) {
-    case "url":
-      return sources.url
-    case "file":
-      return sources.file
-    case "image":
-      return sources.image
-    case "unavailable":
-      return target.kind === "url" ? sources.url : sources.file
+  constructor(input: PreviewSourceSelectionInput) {
+    this.#url = input.url
+    this.#file = input.file
+    this.#image = input.image
+  }
+
+  canLoad(target: PreviewTarget): boolean {
+    return target.kind === "url"
+      ? this.#url || this.#image
+      : this.#file || this.#image
+  }
+
+  allows(outcome: PreviewOutcome, target: PreviewTarget): boolean {
+    if (outcome.kind === "failure") return this.allowsOrigin(target)
+    return this.allowsContent(outcome)
+  }
+
+  allowsOrigin(target: PreviewTarget): boolean {
+    return target.kind === "url" ? this.#url : this.#file
+  }
+
+  allowsImage(): boolean {
+    return this.#image
+  }
+
+  private allowsContent(content: PreviewContent): boolean {
+    switch (content.kind) {
+      case "url":
+        return this.#url
+      case "file":
+        return this.#file
+      case "image":
+        return this.#image
+    }
   }
 }

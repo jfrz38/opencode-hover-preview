@@ -1,10 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { PreviewOutcome } from "../../src/core/preview-content.js"
-import {
-  canLoadPreview,
-  isPreviewEnabled,
-  type PreviewSources,
-} from "../../src/core/preview-policy.js"
+import { PreviewSourceSelection } from "../../src/core/preview-policy.js"
 import type { PreviewTarget } from "../../src/core/preview-target.js"
 
 const urlTarget: PreviewTarget = {
@@ -23,22 +19,23 @@ const fileTarget: PreviewTarget = {
   end: 11,
 }
 
-const sources = (overrides: Partial<PreviewSources> = {}): PreviewSources => ({
+const sources = (overrides: Partial<{ url: boolean; file: boolean; image: boolean }> = {}) =>
+  new PreviewSourceSelection({
   url: true,
   file: true,
   image: true,
   ...overrides,
-})
+  })
 
 describe("preview policy", () => {
   test("allows image loading independently from the target origin", () => {
-    expect(canLoadPreview(urlTarget, sources({ url: false }))).toBe(true)
-    expect(canLoadPreview(fileTarget, sources({ file: false }))).toBe(true)
+    expect(sources({ url: false }).canLoad(urlTarget)).toBe(true)
+    expect(sources({ file: false }).canLoad(fileTarget)).toBe(true)
     expect(
-      canLoadPreview(urlTarget, sources({ url: false, image: false })),
+      sources({ url: false, image: false }).canLoad(urlTarget),
     ).toBe(false)
     expect(
-      canLoadPreview(fileTarget, sources({ file: false, image: false })),
+      sources({ file: false, image: false }).canLoad(fileTarget),
     ).toBe(false)
   })
 
@@ -51,13 +48,12 @@ describe("preview policy", () => {
       data: new Uint8Array(),
     }
     const unavailable: PreviewOutcome = {
-      kind: "unavailable",
-      title: "Unavailable",
-      description: "Unavailable",
+      kind: "failure",
+      reason: "load-failed",
     }
 
-    expect(isPreviewEnabled(urlTarget, image, sources({ url: false }))).toBe(true)
-    expect(isPreviewEnabled(urlTarget, unavailable, sources({ url: false }))).toBe(false)
-    expect(isPreviewEnabled(fileTarget, unavailable, sources({ file: false }))).toBe(false)
+    expect(sources({ url: false }).allows(image, urlTarget)).toBe(true)
+    expect(sources({ url: false }).allows(unavailable, urlTarget)).toBe(false)
+    expect(sources({ file: false }).allows(unavailable, fileTarget)).toBe(false)
   })
 })

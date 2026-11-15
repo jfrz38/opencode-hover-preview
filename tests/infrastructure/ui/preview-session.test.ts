@@ -41,7 +41,7 @@ describe("preview session", () => {
     const loader: PreviewLoader = (_target, signal) =>
       new Promise((resolve) => pending.push({ signal, resolve }))
     const states: Array<PreviewSessionState<Candidate> | undefined> = []
-    const session = new PreviewSession<Candidate>(loader, (state) => states.push(state), () => undefined)
+    const session = new PreviewSession<Candidate>(loader, (state) => states.push(state))
 
     session.show({ target: target("https://first.test"), pointer: 1 })
     session.show({ target: target("https://second.test"), pointer: 2 })
@@ -65,7 +65,6 @@ describe("preview session", () => {
         return outcome("Cached")
       },
       (state) => states.push(state),
-      () => undefined,
     )
     const candidate = { target: target("https://example.com"), pointer: 1 }
 
@@ -79,19 +78,17 @@ describe("preview session", () => {
     expect(states.at(-1)?.candidate.pointer).toBe(2)
   })
 
-  test("does not cache unavailable outcomes", async () => {
+  test("does not cache failure outcomes", async () => {
     let loads = 0
     const session = new PreviewSession<Candidate>(
       async () => {
         loads++
         return {
-          kind: "unavailable",
-          title: "Unavailable",
-          description: "Unavailable",
+          kind: "failure",
+          reason: "load-failed",
         }
       },
       () => {},
-      () => undefined,
     )
     const candidate = { target: target("https://example.com"), pointer: 1 }
 
@@ -113,16 +110,11 @@ describe("preview session", () => {
     const session = new PreviewSession<Candidate>(
       loader,
       (state) => states.push(state),
-      () => ({
-        kind: "unavailable",
-        title: "Unavailable",
-        description: "Could not load.",
-      }),
     )
 
     session.show({ target: target("https://example.com"), pointer: 1 })
     await flushPromises()
-    expect(states.at(-1)?.outcome.kind).toBe("unavailable")
+    expect(states.at(-1)?.outcome.kind).toBe("failure")
 
     const pending = new PreviewSession<Candidate>(
       (_target, signal) => {
@@ -130,7 +122,6 @@ describe("preview session", () => {
         return new Promise(() => {})
       },
       () => {},
-      () => undefined,
     )
     pending.show({ target: target("https://pending.test"), pointer: 1 })
     pending.dispose()

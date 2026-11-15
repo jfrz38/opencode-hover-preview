@@ -25,18 +25,18 @@ describe("public URL policy", () => {
       await validatePublicUrl(new URL(value), async () => {
         throw new Error("Literal addresses must not use DNS")
       }, signal()),
-    ).toBe("Local and private network addresses are not allowed.")
+    ).toEqual({ kind: "failure", reason: "private-address" })
   })
 
   test("rejects private DNS results and unsupported URL features", async () => {
     expect(
       await validatePublicUrl(new URL("https://internal.test"), async () => ["10.0.0.1"], signal()),
-    ).toBe("Local and private network addresses are not allowed.")
+    ).toEqual({ kind: "failure", reason: "private-address" })
     expect(
       await validatePublicUrl(new URL("https://user:secret@example.com"), async () => ["93.184.216.34"], signal()),
-    ).toBe("URLs with embedded credentials are not allowed.")
+    ).toEqual({ kind: "failure", reason: "url-credentials" })
     expect(
       await validatePublicUrl(new URL("https://example.com:8443"), async () => ["93.184.216.34"], signal()),
-    ).toBe("Only standard HTTP and HTTPS ports are allowed.")
+    ).toEqual({ kind: "failure", reason: "nonstandard-port" })
   })
 })

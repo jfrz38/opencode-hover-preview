@@ -81,9 +81,8 @@ describe("preview overlay layout", () => {
       imageHeight: 14,
     })
     const text: PreviewOutcome = {
-      kind: "unavailable",
-      title: "Unavailable",
-      description: "Could not load.",
+      kind: "failure",
+      reason: "load-failed",
     }
     expect(layout(text)).toEqual({
       width: 70,

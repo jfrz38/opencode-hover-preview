@@ -1,10 +1,10 @@
-import type { PreviewSources } from "./core/preview-policy.js"
+import { PreviewSourceSelection } from "./core/preview-policy.js"
 import type { PreviewDisplayOptions } from "./infrastructure/ui/preview-overlay-layout.js"
 
 export interface PluginOptions {
   readonly enabled: boolean
   readonly hoverDelayMs: number
-  readonly sources: PreviewSources
+  readonly sources: PreviewSourceSelection
   readonly display: PreviewDisplayOptions
 }
 
@@ -34,11 +34,11 @@ export function parseOptions(input: Readonly<Record<string, unknown>>): PluginOp
   return {
     enabled: input.enabled !== false && input.diagnostic !== false,
     hoverDelayMs: Math.max(0, Math.min(requestedDelay, MAX_HOVER_DELAY_MS)),
-    sources: {
+    sources: new PreviewSourceSelection({
       url: sources.url !== false,
       file: sources.file !== false,
       image: sources.image !== false,
-    },
+    }),
     display: {
       showDetails: display.showDetails === true,
       width: positiveInteger(display.width, DEFAULT_PREVIEW_WIDTH, MIN_PREVIEW_WIDTH),

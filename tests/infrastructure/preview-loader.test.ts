@@ -3,11 +3,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import type { PreviewOutcome } from "../../src/core/preview-content.js"
-import {
-  canLoadPreview,
-  isPreviewEnabled,
-  type PreviewSources,
-} from "../../src/core/preview-policy.js"
+import { PreviewSourceSelection } from "../../src/core/preview-policy.js"
 import type { PreviewTarget } from "../../src/core/preview-target.js"
 import { loadPreview } from "../../src/infrastructure/preview-loader.js"
 
@@ -24,13 +20,13 @@ function target(kind: PreviewTarget["kind"], value: string): PreviewTarget {
   }
 }
 
-function sources(overrides: Partial<PreviewSources> = {}): PreviewSources {
-  return {
+function sources(overrides: Partial<{ url: boolean; file: boolean; image: boolean }> = {}): PreviewSourceSelection {
+  return new PreviewSourceSelection({
     url: true,
     file: true,
     image: true,
     ...overrides,
-  }
+  })
 }
 
 async function workspace(): Promise<string> {
@@ -49,8 +45,8 @@ describe("preview loading", () => {
     const url = target("url", "https://example.com")
     const file = target("file-link", "./README.md")
 
-    expect(canLoadPreview(url, disabled)).toBe(false)
-    expect(canLoadPreview(file, disabled)).toBe(false)
+    expect(disabled.canLoad(url)).toBe(false)
+    expect(disabled.canLoad(file)).toBe(false)
     expect(await loadPreview(url, undefined, disabled, new AbortController().signal)).toBeUndefined()
     expect(await loadPreview(file, process.cwd(), disabled, new AbortController().signal)).toBeUndefined()
   })
@@ -74,13 +70,13 @@ describe("preview loading", () => {
       data: new Uint8Array(),
     }
 
-    expect(isPreviewEnabled(urlTarget, url, sources({ url: false }))).toBe(false)
-    expect(isPreviewEnabled(urlTarget, image, sources({ url: false }))).toBe(true)
-    expect(isPreviewEnabled(fileTarget, file, sources({ file: false }))).toBe(false)
-    expect(isPreviewEnabled(fileTarget, image, sources({ file: false }))).toBe(true)
-    expect(isPreviewEnabled(urlTarget, url, sources({ image: false }))).toBe(true)
-    expect(isPreviewEnabled(fileTarget, file, sources({ image: false }))).toBe(true)
-    expect(isPreviewEnabled(fileTarget, image, sources({ image: false }))).toBe(false)
+    expect(sources({ url: false }).allows(url, urlTarget)).toBe(false)
+    expect(sources({ url: false }).allows(image, urlTarget)).toBe(true)
+    expect(sources({ file: false }).allows(file, fileTarget)).toBe(false)
+    expect(sources({ file: false }).allows(image, fileTarget)).toBe(true)
+    expect(sources({ image: false }).allows(url, urlTarget)).toBe(true)
+    expect(sources({ image: false }).allows(file, fileTarget)).toBe(true)
+    expect(sources({ image: false }).allows(image, fileTarget)).toBe(false)
   })
 
   test("shows local images independently from file previews", async () => {
@@ -126,23 +122,20 @@ describe("preview loading", () => {
 
   test("hides origin errors when only image previews are enabled", () => {
     const unavailable: PreviewOutcome = {
-      kind: "unavailable",
-      title: "Preview unavailable",
-      description: "The target could not be loaded.",
+      kind: "failure",
+      reason: "load-failed",
     }
 
     expect(
-      isPreviewEnabled(
-        target("url", "https://example.com"),
+      sources({ url: false }).allows(
         unavailable,
-        sources({ url: false }),
+        target("url", "https://example.com"),
       ),
     ).toBe(false)
     expect(
-      isPreviewEnabled(
-        target("file-link", "./missing.png"),
+      sources({ file: false }).allows(
         unavailable,
-        sources({ file: false }),
+        target("file-link", "./missing.png"),
       ),
     ).toBe(false)
   })

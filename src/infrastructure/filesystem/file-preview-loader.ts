@@ -1,16 +1,12 @@
 import { open, realpath, stat } from "node:fs/promises"
 import { basename, extname, isAbsolute, relative, resolve, sep } from "node:path"
-import type { PreviewOutcome, UnavailablePreview } from "../../core/preview-content.js"
+import type { PreviewOutcome } from "../../core/preview-content.js"
 import type { FilePreviewTarget } from "../../core/preview-target.js"
 import { detectImageMime, MAX_IMAGE_BYTES } from "../media/image-format.js"
 
 const MAX_READ_BYTES = 64 * 1024
 const MAX_PREVIEW_CHARACTERS = 4_000
 const MAX_PREVIEW_LINES = 20
-
-function unavailable(description: string): UnavailablePreview {
-  return { kind: "unavailable", title: "File preview unavailable", description }
-}
 
 function isInside(root: string, candidate: string): boolean {
   const pathFromRoot = relative(root, candidate)
@@ -87,7 +83,7 @@ export async function loadFilePreview(
 ): Promise<PreviewOutcome | undefined> {
   const requestedPath = targetPath(target)
   if (requestedPath === undefined || requestedPath.length === 0) {
-    return unavailable("The target is not a local file path.")
+    return { kind: "failure", reason: "invalid-file-target" }
   }
 
   try {
@@ -95,26 +91,26 @@ export async function loadFilePreview(
     const workspacePath = await realpath(workspace)
     const candidatePath = resolve(workspacePath, requestedPath)
     if (!isInside(workspacePath, candidatePath)) {
-      return unavailable("The file is outside the current workspace.")
+      return { kind: "failure", reason: "outside-workspace" }
     }
 
     const resolvedPath = await realpath(candidatePath)
     if (!isInside(workspacePath, resolvedPath)) {
-      return unavailable("The file resolves outside the current workspace.")
+      return { kind: "failure", reason: "workspace-link-escape" }
     }
 
     const fileStat = await stat(resolvedPath)
-    if (!fileStat.isFile()) return unavailable("The target is not a regular file.")
+    if (!fileStat.isFile()) return { kind: "failure", reason: "not-a-file" }
 
     const bytes = await readPrefix(resolvedPath, fileStat.size, signal)
     const imageMime = detectImageMime(bytes)
     if (imageMime !== undefined) {
       if (!imagePreview) return undefined
-      if (fileStat.size > MAX_IMAGE_BYTES) return unavailable("The image is too large to preview.")
+      if (fileStat.size > MAX_IMAGE_BYTES) return { kind: "failure", reason: "image-too-large" }
 
       const imageData = await readPrefix(resolvedPath, fileStat.size, signal, MAX_IMAGE_BYTES)
       if (detectImageMime(imageData) !== imageMime) {
-        return unavailable("The image format could not be validated.")
+        return { kind: "failure", reason: "image-format-mismatch" }
       }
       const relativePath = relative(workspacePath, resolvedPath).split(sep).join("/")
       return {
@@ -143,6 +139,6 @@ export async function loadFilePreview(
     }
   } catch (error) {
     if (signal.aborted) throw error
-    return unavailable("The file does not exist or cannot be read.")
+    return { kind: "failure", reason: "file-unreadable" }
   }
 }

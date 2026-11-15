@@ -1,4 +1,4 @@
-import type { PreviewOutcome, UnavailablePreview } from "../../core/preview-content.js"
+import type { PreviewOutcome } from "../../core/preview-content.js"
 import type { PreviewTarget } from "../../core/preview-target.js"
 import { PreviewCache } from "../cache/preview-cache.js"
 
@@ -25,9 +25,6 @@ export class PreviewSession<Candidate extends PreviewSessionCandidate> {
     private readonly update: (
       state: PreviewSessionState<Candidate> | undefined,
     ) => void,
-    private readonly loadError: (
-      target: PreviewTarget,
-    ) => UnavailablePreview | undefined,
     private readonly cache = new PreviewCache(),
   ) {}
 
@@ -52,15 +49,12 @@ export class PreviewSession<Candidate extends PreviewSessionCandidate> {
           this.update(undefined)
           return
         }
-        if (outcome.kind !== "unavailable") this.cache.set(key, outcome)
+        if (outcome.kind !== "failure") this.cache.set(key, outcome)
         this.update({ candidate, outcome })
       })
       .catch(() => {
         if (controller.signal.aborted || currentGeneration !== this.generation) return
-        const outcome = this.loadError(candidate.target)
-        this.update(
-          outcome === undefined ? undefined : { candidate, outcome },
-        )
+        this.update({ candidate, outcome: { kind: "failure", reason: "load-failed" } })
       })
       .finally(() => {
         if (this.activeLoad === controller) this.activeLoad = undefined

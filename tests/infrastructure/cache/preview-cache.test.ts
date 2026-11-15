@@ -13,7 +13,7 @@ const content: PreviewContent = {
 describe("preview cache", () => {
   test("expires entries", () => {
     let now = 0
-    const cache = new PreviewCache(2, 10, () => now)
+    const cache = new PreviewCache({ maxEntries: 2, ttlMs: 10, now: () => now })
     cache.set("image", content)
 
     expect(cache.get("image")).toEqual(content)
@@ -22,7 +22,7 @@ describe("preview cache", () => {
   })
 
   test("evicts the least recently used entry", () => {
-    const cache = new PreviewCache(2)
+    const cache = new PreviewCache({ maxEntries: 2 })
     cache.set("one", content)
     cache.set("two", content)
     expect(cache.get("one")).toEqual(content)
@@ -34,7 +34,7 @@ describe("preview cache", () => {
   })
 
   test("bounds cached image bytes", () => {
-    const cache = new PreviewCache(100, 60_000, () => 0, 5)
+    const cache = new PreviewCache({ now: () => 0, maxBytes: 5 })
     const image = (size: number): PreviewContent => ({
       kind: "image",
       title: "image.png",
