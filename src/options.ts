@@ -27,7 +27,10 @@ function record(value: unknown): Readonly<Record<string, unknown>> {
 }
 
 export function parseOptions(input: Readonly<Record<string, unknown>>): PluginOptions {
-  const requestedDelay = typeof input.hoverDelayMs === "number" ? input.hoverDelayMs : DEFAULT_HOVER_DELAY_MS
+  const requestedDelay =
+    typeof input.hoverDelayMs === "number" && Number.isFinite(input.hoverDelayMs)
+      ? input.hoverDelayMs
+      : DEFAULT_HOVER_DELAY_MS
   const sources = record(input.sources)
   const display = record(input.display)
   const imageDisplay = record(display.image)

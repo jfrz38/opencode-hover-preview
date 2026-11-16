@@ -37,9 +37,11 @@ describe("plugin options", () => {
     expect(options.sources.canLoad(fileTarget)).toBe(true)
   })
 
-  test("clamps the hover delay", () => {
+  test("clamps the hover delay and normalizes non-finite values", () => {
     expect(parseOptions({ hoverDelayMs: -10 }).hoverDelayMs).toBe(0)
     expect(parseOptions({ hoverDelayMs: 20_000 }).hoverDelayMs).toBe(10_000)
+    expect(parseOptions({ hoverDelayMs: Number.NaN }).hoverDelayMs).toBe(500)
+    expect(parseOptions({ hoverDelayMs: Number.POSITIVE_INFINITY }).hoverDelayMs).toBe(500)
   })
 
   test("supports feature switches and the legacy diagnostic alias", () => {

@@ -70,6 +70,7 @@ export function isPublicIpAddress(address: string): boolean {
     normalized === "::1" ||
     normalized.startsWith("fc") ||
     normalized.startsWith("fd") ||
+    /^fe[cdef]/u.test(normalized) ||
     /^fe[89ab]/u.test(normalized) ||
     normalized.startsWith("ff") ||
     normalized.startsWith("2001:db8:")
