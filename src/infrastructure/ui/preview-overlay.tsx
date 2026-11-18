@@ -4,6 +4,7 @@ import type { MouseEvent, NativeImage, Renderable } from "@opentui/core"
 import { createSignal, onCleanup, Show } from "solid-js"
 import { type PreviewSourceSelection } from "../../core/preview-policy.js"
 import type { PreviewTarget } from "../../core/preview-target.js"
+import { hideCursorWhile } from "../opentui/cursor-visibility.js"
 import { inspectRenderable } from "../opentui/renderable-inspector.js"
 import { observeRootMouse } from "../opentui/root-mouse-observer.js"
 import { loadPreview } from "../preview-loader.js"
@@ -46,6 +47,7 @@ function isInsideOverlay(renderable: Renderable): boolean {
 
 export function PreviewOverlay(props: {
   readonly delayMs: number
+  readonly hideCursorOnHover: boolean
   readonly workspace?: string
   readonly sources: PreviewSourceSelection
   readonly display: PreviewDisplayOptions
@@ -91,6 +93,10 @@ export function PreviewOverlay(props: {
     () => session.hide(),
   )
 
+  const stopHidingCursor = props.hideCursorOnHover
+    ? hideCursorWhile(context.renderer, () => visible() !== undefined)
+    : undefined
+
   const stopObserving = observeRootMouse(context.renderer.root, (event: MouseEvent) => {
     const renderable = event.target
     if (renderable === null) {
@@ -119,6 +125,7 @@ export function PreviewOverlay(props: {
   onCleanup(() => {
     delay.dispose()
     session.dispose()
+    stopHidingCursor?.()
     stopObserving()
     void context.renderer.idle().then(() => syntaxStyle.destroy())
   })

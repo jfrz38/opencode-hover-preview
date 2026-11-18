@@ -4,6 +4,7 @@ import type { PreviewDisplayOptions } from "./infrastructure/ui/preview-overlay-
 export interface PluginOptions {
   readonly enabled: boolean
   readonly hoverDelayMs: number
+  readonly hideCursorOnHover: boolean
   readonly sources: PreviewSourceSelection
   readonly display: PreviewDisplayOptions
 }
@@ -37,6 +38,7 @@ export function parseOptions(input: Readonly<Record<string, unknown>>): PluginOp
   return {
     enabled: input.enabled !== false && input.diagnostic !== false,
     hoverDelayMs: Math.max(0, Math.min(requestedDelay, MAX_HOVER_DELAY_MS)),
+    hideCursorOnHover: input.hideCursorOnHover === true,
     sources: new PreviewSourceSelection({
       url: sources.url !== false,
       file: sources.file !== false,

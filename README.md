@@ -77,6 +77,7 @@ overlay:
       "options": {
         "enabled": true,
         "hoverDelayMs": 500,
+        "hideCursorOnHover": false,
         "sources": {
           "url": true,
           "file": true,
@@ -100,6 +101,7 @@ overlay:
 | --- | --- | --- |
 | `enabled` | `true` | Enables the plugin. |
 | `hoverDelayMs` | `500` | Delay before loading a preview, clamped from `0` to `10000` milliseconds. |
+| `hideCursorOnHover` | `false` | Hides the text caret while a preview is visible. |
 | `sources.url` | `true` | Previews public HTTP(S) pages. |
 | `sources.file` | `true` | Previews workspace text files. |
 | `sources.image` | `true` | Previews supported local and remote images. |
@@ -116,6 +118,28 @@ Image previews remain controlled by `sources.image` even when `sources.url` or
 `sources.file` is disabled. Set both `sources.url` and `sources.image` to
 `false` to prevent network access. Set both `sources.file` and `sources.image`
 to `false` to prevent workspace file reads.
+
+### Hiding the text caret during a preview
+
+Set `hideCursorOnHover` to `true` to hide the prompt caret while a preview is
+on screen:
+
+```json
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "plugins": [
+    {
+      "package": "@jfrz38/opencode-hover-preview",
+      "options": { "hideCursorOnHover": true }
+    }
+  ]
+}
+```
+
+This option is experimental and disabled by default. It hooks into OpenTUI's
+cursor handling, so another plugin that also writes the cursor may conflict
+with it. Leave it disabled if you see the caret flicker or reappear while a
+preview is shown.
 
 ## Compatibility and limitations
 
