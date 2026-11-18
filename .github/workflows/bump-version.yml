@@ -14,10 +14,24 @@ on:
         required: true
         default: develop
         type: string
+      changelog:
+        description: Generate CHANGELOG.md with git-cliff (needs a reachable tag; keep unchecked for the first release)
+        required: true
+        default: true
+        type: boolean
+      overwrite_existing_branch:
+        description: Overwrite the bump branch when it exists and has no open PR
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
   pull-requests: write
+
+concurrency:
+  group: bump-version-${{ inputs.base_branch }}
+  cancel-in-progress: false
 
 jobs:
   bump-version:
@@ -35,7 +49,9 @@ jobs:
           bump: ${{ inputs.bump }}
           strategy: npm
           version-file: package.json
+          changelog: ${{ inputs.changelog && 'git-cliff' || 'none' }}
           base-branch: ${{ inputs.base_branch }}
+          overwrite-existing-branch: ${{ inputs.overwrite_existing_branch }}
           github-token: ${{ github.token }}
           commit-message: "chore: bump version to {next-version}"
           pr-title: "chore: bump version to {next-version}"
