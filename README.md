@@ -15,29 +15,24 @@ application or leaving the current session.
 
 ## Install
 
-OpenCode Hover Preview requires OpenCode 2 and a terminal with mouse input.
+OpenCode Hover Preview requires OpenCode 2, mouse capture enabled in the TUI,
+and a terminal that supports mouse input.
 
-Install the latest published package globally:
-
-```sh
-opencode plugin add @jfrz38/opencode-hover-preview@latest
-```
-
-Alternatively, add the package to your OpenCode TUI configuration:
+Add the package to the global OpenCode TUI configuration at
+`~/.config/opencode/cli.json`:
 
 ```json
 {
   "$schema": "https://opencode.ai/v2/cli.json",
+  "mouse": true,
   "plugins": [
-    {
-      "package": "@jfrz38/opencode-hover-preview",
-      "options": {}
-    }
+    "@jfrz38/opencode-hover-preview"
   ]
 }
 ```
 
-Run `/reload` after changing the plugin configuration.
+OpenCode reloads valid configuration changes automatically. Run `/reload` to
+force a full reload if the plugin does not appear immediately.
 
 To verify the installation, open a workspace in OpenCode and rest the pointer
 for half a second on either:
@@ -111,8 +106,9 @@ overlay:
 | `display.image.allowUpscale` | `false` | Allows images to grow beyond their original pixel dimensions when terminal pixel information is available. |
 
 The overlay automatically shrinks when the terminal is smaller. Width and
-height accept positive integers; fractional values are rounded down and values
-below the renderable minimum are raised.
+height accept positive integers, with minimums of 4 columns and 2 rows.
+Fractional values are rounded down, positive values below the minimum are
+raised, and zero, negative, or invalid values restore the defaults.
 
 Image previews remain controlled by `sources.image` even when `sources.url` or
 `sources.file` is disabled. Set both `sources.url` and `sources.image` to
@@ -136,6 +132,8 @@ on screen:
 }
 ```
 
+![The prompt caret is hidden while a hover preview is visible](https://raw.githubusercontent.com/jfrz38/opencode-hover-preview/main/assets/hide-caret.gif)
+
 This option is experimental and disabled by default. It hooks into OpenTUI's
 cursor handling, so another plugin that also writes the cursor may conflict
 with it. Leave it disabled if you see the caret flicker or reappear while a
@@ -143,9 +141,10 @@ preview is shown.
 
 ## Compatibility and limitations
 
-The plugin integrates with OpenCode 2 through OpenTUI mouse handling because
-OpenCode does not expose a public inline-hover API. Changes in OpenCode or
-OpenTUI may therefore require a plugin update.
+The plugin currently integrates with OpenCode 2 through OpenTUI mouse handling.
+To locate hover targets, it inspects host renderables that are not part of the
+public plugin API. Changes in OpenCode or OpenTUI may therefore require a plugin
+update.
 
 Preview availability depends on the target information retained by OpenCode:
 
@@ -181,7 +180,8 @@ not supported.
 
 ## Development
 
-This project uses Bun 1.4.4. Install dependencies and run all checks:
+Development and CI use Bun 1.4.4. The published package declares Bun 1.3.0 or
+later as its runtime requirement. Install dependencies and run all checks:
 
 ```sh
 make install
