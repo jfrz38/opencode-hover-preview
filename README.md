@@ -132,6 +132,8 @@ on screen:
 }
 ```
 
+![The prompt caret is hidden while a hover preview is visible](https://raw.githubusercontent.com/jfrz38/opencode-hover-preview/main/assets/hide-caret.gif)
+
 This option is experimental and disabled by default. It hooks into OpenTUI's
 cursor handling, so another plugin that also writes the cursor may conflict
 with it. Leave it disabled if you see the caret flicker or reappear while a
