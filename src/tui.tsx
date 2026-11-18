@@ -1,6 +1,6 @@
 import { Plugin } from "@opencode/plugin/tui"
 import { parseOptions } from "./options.js"
-import { PreviewOverlay } from "./ui/preview-overlay.js"
+import { PreviewOverlay } from "./infrastructure/ui/preview-overlay.js"
 
 export default Plugin.define({
   id: "opencode-hover-preview",
@@ -13,7 +13,9 @@ export default Plugin.define({
       render: () => (
         <PreviewOverlay
           delayMs={options.hoverDelayMs}
-          workspace={context.location?.directory}
+          {...(context.location?.directory === undefined
+            ? {}
+            : { workspace: context.location.directory })}
           sources={options.sources}
           display={options.display}
         />

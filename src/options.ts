@@ -1,10 +1,10 @@
-import type { PreviewSources } from "./preview/load-preview.js"
-import type { PreviewDisplayOptions } from "./ui/preview-overlay-layout.js"
+import { PreviewSourceSelection } from "./core/preview-policy.js"
+import type { PreviewDisplayOptions } from "./infrastructure/ui/preview-overlay-layout.js"
 
 export interface PluginOptions {
   readonly enabled: boolean
   readonly hoverDelayMs: number
-  readonly sources: PreviewSources
+  readonly sources: PreviewSourceSelection
   readonly display: PreviewDisplayOptions
 }
 
@@ -27,18 +27,21 @@ function record(value: unknown): Readonly<Record<string, unknown>> {
 }
 
 export function parseOptions(input: Readonly<Record<string, unknown>>): PluginOptions {
-  const requestedDelay = typeof input.hoverDelayMs === "number" ? input.hoverDelayMs : DEFAULT_HOVER_DELAY_MS
+  const requestedDelay =
+    typeof input.hoverDelayMs === "number" && Number.isFinite(input.hoverDelayMs)
+      ? input.hoverDelayMs
+      : DEFAULT_HOVER_DELAY_MS
   const sources = record(input.sources)
   const display = record(input.display)
   const imageDisplay = record(display.image)
   return {
     enabled: input.enabled !== false && input.diagnostic !== false,
     hoverDelayMs: Math.max(0, Math.min(requestedDelay, MAX_HOVER_DELAY_MS)),
-    sources: {
+    sources: new PreviewSourceSelection({
       url: sources.url !== false,
       file: sources.file !== false,
       image: sources.image !== false,
-    },
+    }),
     display: {
       showDetails: display.showDetails === true,
       width: positiveInteger(display.width, DEFAULT_PREVIEW_WIDTH, MIN_PREVIEW_WIDTH),

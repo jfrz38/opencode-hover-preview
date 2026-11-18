@@ -14,7 +14,10 @@ install: ## install dependencies
 install-frozen: ## install dependencies from the lockfile without changes
 	$(BUN) install --frozen-lockfile
 
-.PHONY: typecheck build
+.PHONY: lint typecheck build
+lint: ## check code and architectural boundaries
+	$(BUN) run lint
+
 typecheck: ## check TypeScript types
 	$(BUN) run typecheck
 
@@ -30,5 +33,5 @@ package: ## create the npm package in PACKAGE_DIRECTORY
 	$(BUN) pm pack --destination "$(PACKAGE_DIRECTORY)"
 	cd "$(PACKAGE_DIRECTORY)" && sha256sum *.tgz > package.sha256
 
-check: build test ## run all project checks
+check: lint build test ## run all project checks
 	git diff --check

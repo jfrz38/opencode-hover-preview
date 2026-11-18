@@ -20,7 +20,8 @@
   ],
   "scripts": {
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src tests"
   },
   "dependencies": {
     "@opencode/plugin": "2.3.0",
@@ -33,9 +34,15 @@
     "solid-js": ">=1.9.0"
   },
   "devDependencies": {
+    "@babel/core": "8.1.2",
+    "@babel/eslint-parser": "8.1.2",
+    "@babel/plugin-syntax-jsx": "8.0.1",
+    "@babel/plugin-syntax-typescript": "8.0.3",
+    "@jfrz38/eslint-plugin-clean-architecture-highlighter": "0.1.1",
     "@opentui/core": "0.8.4",
     "@opentui/solid": "0.8.4",
     "@types/bun": "1.4.4",
+    "eslint": "10.15.0",
     "solid-js": "1.9.18",
     "typescript": "7.0.2"
   },

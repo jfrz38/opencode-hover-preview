@@ -1,16 +1,29 @@
 import { describe, expect, test } from "bun:test"
 import { parseOptions } from "../src/options.js"
+import type { PreviewTarget } from "../src/core/preview-target.js"
+
+const urlTarget: PreviewTarget = {
+  kind: "url",
+  value: "https://example.com",
+  source: "text",
+  start: 0,
+  end: 19,
+}
+
+const fileTarget: PreviewTarget = {
+  kind: "file-mention",
+  value: "@README.md",
+  source: "text",
+  start: 0,
+  end: 10,
+}
 
 describe("plugin options", () => {
   test("uses safe defaults", () => {
-    expect(parseOptions({})).toEqual({
+    const options = parseOptions({})
+    expect(options).toMatchObject({
       enabled: true,
       hoverDelayMs: 500,
-      sources: {
-        url: true,
-        file: true,
-        image: true,
-      },
       display: {
         showDetails: false,
         width: 70,
@@ -20,21 +33,25 @@ describe("plugin options", () => {
         },
       },
     })
+    expect(options.sources.canLoad(urlTarget)).toBe(true)
+    expect(options.sources.canLoad(fileTarget)).toBe(true)
   })
 
-  test("clamps the hover delay", () => {
+  test("clamps the hover delay and normalizes non-finite values", () => {
     expect(parseOptions({ hoverDelayMs: -10 }).hoverDelayMs).toBe(0)
     expect(parseOptions({ hoverDelayMs: 20_000 }).hoverDelayMs).toBe(10_000)
+    expect(parseOptions({ hoverDelayMs: Number.NaN }).hoverDelayMs).toBe(500)
+    expect(parseOptions({ hoverDelayMs: Number.POSITIVE_INFINITY }).hoverDelayMs).toBe(500)
   })
 
   test("supports feature switches and the legacy diagnostic alias", () => {
     expect(parseOptions({ enabled: false }).enabled).toBe(false)
     expect(parseOptions({ diagnostic: false }).enabled).toBe(false)
-    expect(parseOptions({ sources: { url: false, file: false, image: false } }).sources).toEqual({
-      url: false,
-      file: false,
-      image: false,
-    })
+    const sources = parseOptions({
+      sources: { url: false, file: false, image: false },
+    }).sources
+    expect(sources.canLoad(urlTarget)).toBe(false)
+    expect(sources.canLoad(fileTarget)).toBe(false)
   })
 
   test("shows preview details only when explicitly enabled", () => {
@@ -79,8 +96,8 @@ describe("plugin options", () => {
   })
 
   test("uses defaults for invalid option groups", () => {
-    expect(parseOptions({ sources: null, display: "compact" })).toMatchObject({
-      sources: { url: true, file: true, image: true },
+    const options = parseOptions({ sources: null, display: "compact" })
+    expect(options).toMatchObject({
       display: {
         showDetails: false,
         width: 70,
@@ -88,20 +105,20 @@ describe("plugin options", () => {
         image: { allowUpscale: false },
       },
     })
+    expect(options.sources.canLoad(urlTarget)).toBe(true)
+    expect(options.sources.canLoad(fileTarget)).toBe(true)
   })
 
   test("does not interpret legacy flat preview options", () => {
-    expect(
-      parseOptions({
+    const options = parseOptions({
         urlPreview: false,
         filePreview: false,
         imagePreview: false,
         showDetails: true,
         previewWidth: 90,
         previewHeight: 80,
-      }),
-    ).toMatchObject({
-      sources: { url: true, file: true, image: true },
+      })
+    expect(options).toMatchObject({
       display: {
         showDetails: false,
         width: 70,
@@ -109,6 +126,8 @@ describe("plugin options", () => {
         image: { allowUpscale: false },
       },
     })
+    expect(options.sources.canLoad(urlTarget)).toBe(true)
+    expect(options.sources.canLoad(fileTarget)).toBe(true)
   })
 
   test("does not interpret legacy minHeight and maxHeight settings", () => {
