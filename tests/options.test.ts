@@ -24,6 +24,7 @@ describe("plugin options", () => {
     expect(options).toMatchObject({
       enabled: true,
       hoverDelayMs: 500,
+      hideCursorOnHover: false,
       display: {
         showDetails: false,
         width: 70,
@@ -52,6 +53,12 @@ describe("plugin options", () => {
     }).sources
     expect(sources.canLoad(urlTarget)).toBe(false)
     expect(sources.canLoad(fileTarget)).toBe(false)
+  })
+
+  test("hides the cursor on hover only when explicitly enabled", () => {
+    expect(parseOptions({}).hideCursorOnHover).toBe(false)
+    expect(parseOptions({ hideCursorOnHover: true }).hideCursorOnHover).toBe(true)
+    expect(parseOptions({ hideCursorOnHover: "true" }).hideCursorOnHover).toBe(false)
   })
 
   test("shows preview details only when explicitly enabled", () => {

@@ -13,6 +13,7 @@ export default Plugin.define({
       render: () => (
         <PreviewOverlay
           delayMs={options.hoverDelayMs}
+          hideCursorOnHover={options.hideCursorOnHover}
           {...(context.location?.directory === undefined
             ? {}
             : { workspace: context.location.directory })}
