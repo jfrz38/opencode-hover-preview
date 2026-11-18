@@ -1,0 +1,100 @@
+name: Create Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: create-release-main
+  cancel-in-progress: false
+
+jobs:
+  verify-package:
+    outputs:
+      version-changed: ${{ steps.version-change.outputs.changed }}
+      version-higher: ${{ steps.version-change.outputs.is-higher }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+      - name: Install dependencies
+        run: make install-frozen
+      - name: Run project checks
+        run: make check
+      - name: Verify the version changed
+        id: version-change
+        uses: jfrz38/check-version-change@12828e3736f108329fe0ea7a8800966b4b2730af # v1.6.0
+        with:
+          file-path: package.json
+          compare-source: git-ref
+          compare-ref: HEAD^
+      - name: Package release candidate
+        if: steps.version-change.outputs.changed == 'true' && steps.version-change.outputs.is-higher == 'true'
+        env:
+          PACKAGE_DIRECTORY: ${{ runner.temp }}/npm-package
+        run: make package
+      - name: Upload verified package
+        if: steps.version-change.outputs.changed == 'true' && steps.version-change.outputs.is-higher == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: npm-package-${{ github.sha }}
+          path: ${{ runner.temp }}/npm-package/*
+          if-no-files-found: error
+          retention-days: 7
+
+  create-release:
+    needs: verify-package
+    if: >-
+      needs.verify-package.result == 'success' &&
+      needs.verify-package.outputs.version-changed == 'true' &&
+      needs.verify-package.outputs.version-higher == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Resolve release version
+        id: version
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          test -n "$version"
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+      - name: Download verified package
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: npm-package-${{ github.sha }}
+          path: ${{ runner.temp }}/npm-package
+      - name: Create immutable tag and GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          tag_commit="$(git ls-remote origin "refs/tags/${TAG}^{}" | awk '{print $1}')"
+          if [ -n "$tag_commit" ]; then
+            test "$tag_commit" = "$GITHUB_SHA"
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" "$RUNNER_TEMP"/npm-package/* \
+              --target "$GITHUB_SHA" \
+              --title "$TAG" \
+              --generate-notes

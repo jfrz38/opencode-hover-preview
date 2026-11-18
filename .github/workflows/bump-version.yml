@@ -1,0 +1,58 @@
+name: Bump Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version component to bump
+        required: true
+        default: patch
+        type: choice
+        options: [patch, minor, major]
+      base_branch:
+        description: Branch to bump and target with the pull request
+        required: true
+        default: develop
+        type: string
+      changelog:
+        description: Generate CHANGELOG.md with git-cliff (needs a reachable tag; keep unchecked for the first release)
+        required: true
+        default: true
+        type: boolean
+      overwrite_existing_branch:
+        description: Overwrite the bump branch when it exists and has no open PR
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: bump-version-${{ inputs.base_branch }}
+  cancel-in-progress: false
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.base_branch }}
+          fetch-depth: 0
+      - name: Bump version
+        uses: jfrz38/auto-version-bump-action@7a76804803c0ae5dc7c5d8d1ac7bfcf4fbbb4d6f # v0.4.0
+        with:
+          bump: ${{ inputs.bump }}
+          strategy: npm
+          version-file: package.json
+          changelog: ${{ inputs.changelog && 'git-cliff' || 'none' }}
+          base-branch: ${{ inputs.base_branch }}
+          overwrite-existing-branch: ${{ inputs.overwrite_existing_branch }}
+          github-token: ${{ github.token }}
+          commit-message: "chore: bump version to {next-version}"
+          pr-title: "chore: bump version to {next-version}"
+          pr-body: "Bumps opencode-hover-preview from {current-version} to {next-version} using a {bump} release bump."
